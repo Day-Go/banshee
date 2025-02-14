@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2dc5278nf1hm"]
+
+[ext_resource type="Script" path="res://code_block.gd" id="1_tq851"]
+
+[node name="CodeBlock" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tq851")
+
+[node name="CodeArea" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="CopyButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+text = "Copy"
+
+[node name="LanguageLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "gdscript"
