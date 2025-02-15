@@ -23,6 +23,7 @@ func _ready() -> void:
 	LlmBackend.generation_started.connect(_on_generation_started)
 	LlmBackend.chunk_processed.connect(_on_chunk_processed)
 	LlmBackend.generation_finished.connect(_on_generation_finished)
+	LlmBackend.embedding_finished.connect(_on_embedding_finished)
 
 	create_rich_text_label()
 	input.text = "write hello world in python."
@@ -34,6 +35,11 @@ func _on_generation_started() -> void:
 
 func _on_generation_finished() -> void:
 	button.disabled = false
+
+
+func _on_embedding_finished(embedding: Array) -> void:
+	print("Inserting embedding")
+	SqliteClient.insert_embedding("57f8gf", "Test query", embedding)
 
 
 func _on_button_pressed() -> void:

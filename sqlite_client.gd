@@ -15,7 +15,7 @@ func _ready() -> void:
 
 	var schema = define_schema()
 	connect_db(schema)
-	insert_chat()
+	#insert_chat()
 
 
 func cprint(text: String) -> void:
@@ -30,7 +30,7 @@ func define_schema() -> Dictionary:
 	chat_history_dict["id"] = {"data_type": "int", "primary_key": true, "not_null": true}
 	chat_history_dict["convo_hash"] = {"data_type": "text"}
 	chat_history_dict["title"] = {"data_type": "text"}
-	chat_history_dict["sample_embedding"] = {"data_type": "float[8]"}
+	chat_history_dict["embedding"] = {"data_type": "float[1024]"}
 
 	tables_dict["chat_history"] = chat_history_dict
 
@@ -46,6 +46,19 @@ func connect_db(schema: Dictionary) -> void:
 	db.enable_load_extension(true)
 	db.load_extension("/usr/lib/python3.13/site-packages/sqlite_vec/vec0.so", "sqlite3_vec_init")
 	db.enable_load_extension(false)
+
+
+func insert_embedding(convo_hash: String, title: String, embedding: Array) -> void:
+	var insert_query = (
+		"""
+		INSERT OR REPLACE INTO chat_history (convo_hash, title, embedding) VALUES
+		('%s', '%s', '%s');
+	"""
+		% [convo_hash, title, embedding]
+	)
+
+	var result = db.query(insert_query)
+	cprint("Insert result: " + str(result))
 
 
 func insert_chat() -> void:

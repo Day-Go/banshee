@@ -3,11 +3,13 @@ class_name CodeBlockContainer
 
 @onready var code_area: RichTextLabel = %CodeArea
 @onready var copy_button: Button = %CopyButton
+@onready var embed_button: Button = %EmbedButton
 @onready var language_label: Label = %LanguageLabel
 
 
 func _ready() -> void:
 	copy_button.pressed.connect(_on_copy_button_pressed)
+	embed_button.pressed.connect(_on_embed_button_pressed)
 	code_area.fit_content = true
 
 
@@ -26,3 +28,7 @@ func set_language(language: String) -> void:
 func _on_copy_button_pressed() -> void:
 	DisplayServer.clipboard_set(code_area.get_parsed_text())
 	print("Copied to clipboard")
+
+
+func _on_embed_button_pressed() -> void:
+	LlmBackend.embed(code_area.get_parsed_text())

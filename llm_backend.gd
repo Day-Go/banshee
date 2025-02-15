@@ -1,8 +1,10 @@
 extends Node
 
-signal generation_started
-signal chunk_processed(chunk: String)
+signal embedding_started
+signal embedding_finished
+signal generation_started(embedding: Array)
 signal generation_finished
+signal chunk_processed(chunk: String)
 
 var http := HTTPClient.new()
 var headers := ["User-Agent: Pirulo/1.0 (Godot)", "Accept: */*"]
@@ -64,3 +66,41 @@ func generate(prompt: String) -> void:
 				chunk_processed.emit(parsed_chunk)
 
 	generation_finished.emit()
+
+
+func embed(input: String) -> void:
+	embedding_started.emit()
+	var json_data = {"model": "snowflake-arctic-embed", "input": input}
+	err = http.request(HTTPClient.METHOD_POST, "/api/embed", headers, JSON.stringify(json_data))
+	if err != OK:
+		print("Request error: %s" % err)
+		return
+
+	while http.get_status() == HTTPClient.STATUS_REQUESTING:
+		http.poll()
+		print("Requesting...")
+		await get_tree().process_frame
+
+	if http.has_response():
+		var response_code = http.get_response_code()
+		if response_code != 200:
+			print("HTTP Error: %s" % response_code)
+			return
+
+		var response_body = PackedByteArray()
+		while http.get_status() == HTTPClient.STATUS_BODY:
+			http.poll()
+			var chunk = http.read_response_body_chunk()
+			if chunk.size() == 0:
+				await get_tree().process_frame
+			else:
+				response_body.append_array(chunk)
+
+		var response_text = response_body.get_string_from_utf8()
+		var parsed_response = JSON.parse_string(response_text)
+
+		if parsed_response and parsed_response.has("embeddings"):
+			print(parsed_response["embeddings"][0].size())
+			embedding_finished.emit(parsed_response["embeddings"][0])
+		else:
+			print("Invalid response format: ", response_text)
