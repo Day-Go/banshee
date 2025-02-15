@@ -41,9 +41,9 @@ func _on_generation_finished() -> void:
 	button.disabled = false
 
 
-func _on_embedding_finished(embedding: Array) -> void:
+func _on_embedding_finished(content: String, embedding: Array) -> void:
 	print("Inserting embedding")
-	SqliteClient.insert_embedding("57f8gf", "Test query", embedding)
+	SqliteClient.insert_embedding("57f8gf", "Test query", content, embedding)
 
 
 func _on_button_pressed() -> void:
@@ -51,7 +51,7 @@ func _on_button_pressed() -> void:
 	write_target.text = input.text
 
 	start_generation()
-	#input.text = ""
+	input.text = ""
 
 
 func start_generation() -> void:

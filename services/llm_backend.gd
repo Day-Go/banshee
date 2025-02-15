@@ -2,7 +2,7 @@ extends Node
 
 signal embedding_started
 signal embedding_finished
-signal generation_started(embedding: Array)
+signal generation_started(content: String, embedding: Array)
 signal generation_finished
 signal chunk_processed(chunk: String)
 
@@ -101,6 +101,6 @@ func embed(input: String) -> void:
 
 		if parsed_response and parsed_response.has("embeddings"):
 			print(parsed_response["embeddings"][0].size())
-			embedding_finished.emit(parsed_response["embeddings"][0])
+			embedding_finished.emit(input, parsed_response["embeddings"][0])
 		else:
 			print("Invalid response format: ", response_text)
