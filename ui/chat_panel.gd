@@ -3,8 +3,8 @@ extends Node
 @onready var message_scene = preload("res://ui/message.tscn")
 @onready var code_block_container_scene = preload("res://ui/code_block.tscn")
 @onready var scroll_container: ScrollContainer = %ScrollContainer
-@onready var button: Button = %Button
-@onready var input: TextEdit = %Input
+@onready var button: Button = %SendButton
+@onready var input: TextEdit = %InputTextArea
 @onready var output_container: VBoxContainer = %OutputContainer
 
 var buffer := ""
