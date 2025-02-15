@@ -18,6 +18,7 @@ var rich_text_label: RichTextLabel
 var code_block := ""
 var language := ""
 
+var current_assistant_response := ""
 var message: PanelContainer
 var message_container: VBoxContainer
 
@@ -32,6 +33,8 @@ func _ready() -> void:
 
 	input.text = "create blazor dropdown component that displays a list of users."
 
+	SqliteClient.init_conversation()
+
 
 func _on_generation_started() -> void:
 	button.disabled = true
@@ -40,15 +43,42 @@ func _on_generation_started() -> void:
 func _on_generation_finished() -> void:
 	button.disabled = false
 
+	if !current_assistant_response.is_empty():
+		var assistant_message_id = SqliteClient.save_message(
+			current_assistant_response, "assistant"
+		)
+		if assistant_message_id == -1:
+			push_error("Failed to save assistant message")
+		current_assistant_response = ""  # Reset for next generation
+
 
 func _on_embedding_finished(content: String, embedding: Array) -> void:
 	print("Inserting embedding")
-	SqliteClient.insert_embedding(1, content, embedding)
+	var message_id_query = """
+        SELECT id FROM messages 
+        WHERE conversation_id = ? 
+        ORDER BY id DESC LIMIT 1;
+    """
+	if !SqliteClient.db.query_with_bindings(
+		message_id_query, [SqliteClient.current_conversation_id]
+	):
+		push_error("Failed to get message for embedding: " + SqliteClient.db.error_message)
+		return
+
+	if SqliteClient.db.query_result.size() > 0:
+		var message_id = SqliteClient.db.query_result[0]["id"]
+		SqliteClient.insert_embedding(message_id, content, embedding)
+	else:
+		push_error("No message found for embedding")
 
 
 func _on_button_pressed() -> void:
 	create_message()
 	write_target.text = input.text
+
+	var user_message_id = SqliteClient.save_message(input.text, "user")
+	if user_message_id == -1:
+		push_error("Failed to save user message")
 
 	start_generation()
 	input.text = ""
@@ -92,6 +122,8 @@ func create_code_block(language: String) -> void:
 
 
 func _on_chunk_processed(chunk: String) -> void:
+	current_assistant_response += chunk
+
 	# First, handle any remaining backticks from previous chunk
 	if partial_backtick_sequence.length() > 0:
 		chunk = partial_backtick_sequence + chunk

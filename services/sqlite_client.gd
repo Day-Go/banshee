@@ -4,6 +4,7 @@ var db: SQLite = null
 const verbosity_level: int = SQLite.VERBOSE
 
 var db_name := "res://data/test"
+var current_conversation_id: int = -1
 
 signal output_received(text)
 
@@ -86,7 +87,6 @@ func connect_db(schema: Dictionary) -> void:
 	db.enable_load_extension(false)
 
 
-# Function to create tables with foreign key support
 func create_tables(db: SQLite, schema: Dictionary) -> void:
 	# Enable foreign key support
 	db.query("PRAGMA foreign_keys = ON;")
@@ -139,14 +139,114 @@ func create_tables(db: SQLite, schema: Dictionary) -> void:
 		print("Created table " + table_name + ": " + str(result))
 
 
+func init_conversation() -> void:
+	var init_query = """
+        SELECT id FROM conversations 
+        ORDER BY created_at DESC 
+        LIMIT 1;
+    """
+	if !db.query(init_query):  # No bindings needed for this query
+		push_error("Failed to check for existing conversations: " + db.error_message)
+		return
+
+	if db.query_result.size() > 0:
+		current_conversation_id = db.query_result[0]["id"]
+	else:
+		# Create a new conversation if none exists
+		current_conversation_id = create_conversation()
+
+
+func create_conversation(title: String = "New Conversation") -> int:
+	var hash = generate_uuid()
+
+	var convo_insert_query = """
+        INSERT INTO conversations (hash, title)
+        VALUES (?, ?);
+    """
+	if !db.query_with_bindings(convo_insert_query, [hash, title]):
+		push_error("Failed to insert conversation: " + db.error_message)
+		return -1
+
+	var convo_id_query = """
+        SELECT id FROM conversations 
+        WHERE hash = ?;
+    """
+	if !db.query_with_bindings(convo_id_query, [hash]):
+		push_error("Failed to get conversation ID: " + db.error_message)
+		return -1
+
+	if db.query_result.size() > 0:
+		current_conversation_id = db.query_result[0]["id"]
+		return current_conversation_id
+
+	push_error("No conversation found after insert")
+	return -1
+
+
+func save_message(content: String, role: String) -> int:
+	if current_conversation_id == -1:
+		# No active conversation, create one
+		current_conversation_id = create_conversation()
+		if current_conversation_id == -1:
+			push_error("Failed to create conversation for message")
+			return -1
+
+	var message_insert_query = """
+        INSERT INTO messages (conversation_id, content, role)
+        VALUES (?, ?, ?);
+    """
+	if !db.query_with_bindings(message_insert_query, [current_conversation_id, content, role]):
+		push_error("Failed to insert message: " + db.error_message)
+		return -1
+
+	var message_id_query = """
+        SELECT id FROM messages 
+        WHERE conversation_id = ? 
+        ORDER BY id DESC LIMIT 1;
+    """
+	if !db.query_with_bindings(message_id_query, [current_conversation_id]):
+		push_error("Failed to get message ID: " + db.error_message)
+		return -1
+
+	if db.query_result.size() > 0:
+		return db.query_result[0]["id"]
+
+	push_error("No message found after insert")
+	return -1
+
+
 func insert_embedding(message_id: int, content: String, embedding: Array) -> void:
+	# godot-sqlite doesn't support arrays in query_with_binding so use string interpolation
+	# and strip any apostrophes from the content for now
 	var insert_query = (
 		"""
-		INSERT OR REPLACE INTO embeddings (message_id, content, embedding) VALUES
-		(%s, '%s', '%s');
-	"""
-		% [message_id, content, embedding]
+        INSERT OR REPLACE INTO embeddings (message_id, content, embedding) VALUES
+        (%s, '%s', '%s');
+    """
+		% [message_id, content.replace("'", ""), embedding]
 	)
-
 	var result = db.query(insert_query)
 	cprint("Insert result: " + str(result))
+
+
+func generate_uuid() -> String:
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+
+	var hex_chars = "0123456789abcdef"
+	var uuid_format = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+	var uuid = ""
+
+	for c in uuid_format:
+		if c == "-":
+			uuid += "-"
+		elif c == "4":
+			uuid += "4"
+		elif c == "y":
+			# Version 4 UUID specific bits
+			var rand = rng.randi_range(8, 11)  # 8,9,a,b
+			uuid += hex_chars[rand]
+		else:
+			uuid += hex_chars[rng.randi() & 0xf]
+
+	return uuid
