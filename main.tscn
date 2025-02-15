@@ -55,6 +55,7 @@ size_flags_horizontal = 3
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/HBoxContainer/PanelContainer"]
 layout_mode = 2
+follow_focus = true
 
 [node name="OutputContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/PanelContainer/ScrollContainer"]
 unique_name_in_owner = true
