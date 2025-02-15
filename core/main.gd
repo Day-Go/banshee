@@ -43,7 +43,7 @@ func _on_generation_finished() -> void:
 
 func _on_embedding_finished(content: String, embedding: Array) -> void:
 	print("Inserting embedding")
-	SqliteClient.insert_embedding("57f8gf", "Test query", content, embedding)
+	SqliteClient.insert_embedding(1, content, embedding)
 
 
 func _on_button_pressed() -> void:
