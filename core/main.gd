@@ -1,6 +1,6 @@
 extends Node
 
-@onready var code_block_container_scene = preload("res://code_block.tscn")
+@onready var code_block_container_scene = preload("res://ui/code_block.tscn")
 @onready var button: Button = %Button
 @onready var input: TextEdit = %Input
 @onready var output_container: VBoxContainer = %OutputContainer

@@ -11,14 +11,14 @@ config_version=5
 [application]
 
 config/name="banshee"
-run/main_scene="res://main.tscn"
+run/main_scene="res://core/main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://assets/icon.svg"
 
 [autoload]
 
-LlmBackend="*res://llm_backend.gd"
-SqliteClient="*res://sqlite_client.gd"
+LlmBackend="*res://services/llm_backend.gd"
+SqliteClient="*res://services/sqlite_client.gd"
 
 [editor_plugins]
 

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c2dc5278nf1hm"]
 
-[ext_resource type="Script" path="res://code_block.gd" id="1_tq851"]
+[ext_resource type="Script" path="res://ui/code_block.gd" id="1_tq851"]
 
 [node name="CodeBlock" type="PanelContainer"]
 anchors_preset = 15
