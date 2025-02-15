@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://d11434a6ghpmg"]
+
+[node name="Message" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+
+[node name="MessageContainer" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="MessageContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Name of sender"
+
+[node name="DateTimeLabel" type="Label" parent="MessageContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1/1/2025 13:00"

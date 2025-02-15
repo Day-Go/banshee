@@ -1,6 +1,8 @@
 extends Node
 
+@onready var message_scene = preload("res://ui/message.tscn")
 @onready var code_block_container_scene = preload("res://ui/code_block.tscn")
+@onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var button: Button = %Button
 @onready var input: TextEdit = %Input
 @onready var output_container: VBoxContainer = %OutputContainer
@@ -12,9 +14,12 @@ var is_in_inline_code := false
 var partial_backtick_sequence := ""
 var is_collecting_language := false
 var partial_language := ""
-var current_rich_text_label: RichTextLabel
-var current_code_block := ""
-var current_language := ""
+var rich_text_label: RichTextLabel
+var code_block := ""
+var language := ""
+
+var message: PanelContainer
+var message_container: VBoxContainer
 
 
 func _ready() -> void:
@@ -25,8 +30,7 @@ func _ready() -> void:
 	LlmBackend.generation_finished.connect(_on_generation_finished)
 	LlmBackend.embedding_finished.connect(_on_embedding_finished)
 
-	create_rich_text_label()
-	input.text = "write hello world in python."
+	input.text = "create blazor dropdown component that displays a list of users."
 
 
 func _on_generation_started() -> void:
@@ -43,31 +47,46 @@ func _on_embedding_finished(embedding: Array) -> void:
 
 
 func _on_button_pressed() -> void:
-	for child in output_container.get_children():
-		child.queue_free()
+	create_message()
+	write_target.text = input.text
+
+	start_generation()
+	#input.text = ""
+
+
+func start_generation() -> void:
+	create_message()
+
 	is_in_code_block = false
 	is_in_inline_code = false
 	is_collecting_language = false
 	partial_backtick_sequence = ""
 	partial_language = ""
-	current_code_block = ""
-	current_language = ""
+	code_block = ""
+	language = ""
 	create_rich_text_label()
 	LlmBackend.generate(input.text)
 
 
+func create_message() -> void:
+	message = message_scene.instantiate()
+	output_container.add_child(message)
+	message_container = message.get_node("%MessageContainer")
+	create_rich_text_label()
+
+
 func create_rich_text_label() -> void:
-	current_rich_text_label = RichTextLabel.new()
-	current_rich_text_label.fit_content = true
-	current_rich_text_label.bbcode_enabled = true
-	output_container.add_child(current_rich_text_label)
-	current_rich_text_label.text = ""
-	write_target = current_rich_text_label
+	rich_text_label = RichTextLabel.new()
+	rich_text_label.fit_content = true
+	rich_text_label.bbcode_enabled = true
+	message_container.add_child(rich_text_label)
+	rich_text_label.text = ""
+	write_target = rich_text_label
 
 
 func create_code_block(language: String) -> void:
 	var code_block_container = code_block_container_scene.instantiate()
-	output_container.add_child(code_block_container)
+	message_container.add_child(code_block_container)
 	code_block_container.set_language(language.strip_edges())
 	write_target = code_block_container.get_code_area()
 
@@ -130,3 +149,6 @@ func _on_chunk_processed(chunk: String) -> void:
 		else:
 			write_target.append_text(char)
 			i += 1
+
+	await get_tree().process_frame
+	scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
