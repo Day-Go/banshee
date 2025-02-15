@@ -19,9 +19,21 @@ var current_language := ""
 
 func _ready() -> void:
 	button.pressed.connect(_on_button_pressed)
+
+	LlmBackend.generation_started.connect(_on_generation_started)
 	LlmBackend.chunk_processed.connect(_on_chunk_processed)
+	LlmBackend.generation_finished.connect(_on_generation_finished)
+
 	create_rich_text_label()
 	input.text = "write hello world in python."
+
+
+func _on_generation_started() -> void:
+	button.disabled = true
+
+
+func _on_generation_finished() -> void:
+	button.disabled = false
 
 
 func _on_button_pressed() -> void:

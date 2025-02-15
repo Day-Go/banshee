@@ -1,6 +1,8 @@
 extends Node
 
+signal generation_started
 signal chunk_processed(chunk: String)
+signal generation_finished
 
 var http := HTTPClient.new()
 var headers := ["User-Agent: Pirulo/1.0 (Godot)", "Accept: */*"]
@@ -22,15 +24,12 @@ func _ready() -> void:
 
 	assert(http.get_status() == HTTPClient.STATUS_CONNECTED)
 
-	clear_buffer()
-
-
-func clear_buffer() -> void:
 	buffer = ""
 
 
 func generate(prompt: String) -> void:
-	clear_buffer()
+	generation_started.emit()
+	buffer = ""
 
 	var json_data = {"model": "qwen2.5-coder:32b", "prompt": prompt, "stream": true}
 
@@ -63,3 +62,5 @@ func generate(prompt: String) -> void:
 			else:
 				var parsed_chunk = JSON.parse_string(chunk.get_string_from_ascii())["response"]
 				chunk_processed.emit(parsed_chunk)
+
+	generation_finished.emit()
