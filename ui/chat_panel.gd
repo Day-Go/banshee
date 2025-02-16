@@ -71,7 +71,6 @@ func _on_generation_finished() -> void:
 
 	if convo_context.size() == 2:
 		var title = await LlmBackend.create_title(convo_context)
-		print(title)
 		SqliteClient.update_conversation_title(convo_id, title.replace('"', ""))
 
 

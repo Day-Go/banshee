@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://can1176ia5egg"]
+
+[ext_resource type="Script" path="res://ui/convo_card.gd" id="1_khgiq"]
+
+[node name="ConvoCard" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_khgiq")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="DateTimeLabel" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2

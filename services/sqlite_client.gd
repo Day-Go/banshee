@@ -5,7 +5,8 @@ const verbosity_level: int = SQLite.QUIET
 
 var db_name := "res://data/test"
 
-signal output_received(text)
+signal convo_created(convo_id: int, title: String)
+signal convo_title_updated(convo_id: int, title: String)
 
 
 func _ready() -> void:
@@ -15,11 +16,6 @@ func _ready() -> void:
 
 	var schema = define_schema()
 	connect_db(schema)
-
-
-func cprint(text: String) -> void:
-	print(text)
-	output_received.emit(text)
 
 
 func define_schema() -> Dictionary:
@@ -161,7 +157,9 @@ func create_conversation() -> int:
 		return -1
 
 	if db.query_result.size() > 0:
-		return db.query_result[0]["id"]
+		var convo_id = db.query_result[0]["id"]
+		convo_created.emit(convo_id, title)
+		return convo_id
 
 	push_error("Coudln't retrieve id of newly created conversation.")
 	return -1
@@ -175,6 +173,8 @@ func update_conversation_title(convo_id: int, title: String) -> void:
 	"""
 	if !db.query_with_bindings(title_update_query, [title, convo_id]):
 		push_error("Couldn't update the title of conversation %s" % convo_id)
+
+	convo_title_updated.emit(convo_id, title)
 
 
 func save_message(convo_id: int, content: String, role: String) -> int:
@@ -202,6 +202,22 @@ func save_message(convo_id: int, content: String, role: String) -> int:
 	return -1
 
 
+func get_n_latest_convos(n: int) -> Array:
+	var n_latest_convo_query := """
+        SELECT id, hash, title, created_at
+        FROM conversations
+        ORDER BY created_at DESC
+        LIMIT ?
+	"""
+	if !db.query_with_bindings(n_latest_convo_query, [n]):
+		push_error("Failed to retrieve %s most recent conversations")
+
+	if db.query_result.size() > 0:
+		return db.query_result
+	else:
+		return Array()
+
+
 func insert_embedding(message_id: int, content: String, embedding: Array) -> void:
 	# godot-sqlite doesn't support arrays in query_with_binding so use string interpolation
 	# and strip any apostrophes from the content for now
@@ -212,8 +228,7 @@ func insert_embedding(message_id: int, content: String, embedding: Array) -> voi
     """
 		% [message_id, content.replace("'", ""), embedding]
 	)
-	var result = db.query(insert_query)
-	cprint("Insert result: " + str(result))
+	db.query(insert_query)
 
 
 func generate_uuid() -> String:
