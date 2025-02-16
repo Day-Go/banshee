@@ -24,6 +24,8 @@ var convo_id: int = -1
 var is_scrolling: bool = false
 var convo_context := Array()
 
+enum Sender { USER, ASSISTANT }
+
 
 func _ready() -> void:
 	button.pressed.connect(_on_button_pressed)
@@ -93,7 +95,7 @@ func _on_embedding_finished(content: String, embedding: Array) -> void:
 
 
 func _on_button_pressed() -> void:
-	create_message()
+	create_message(Sender.USER)
 	write_target.text = input.text
 
 	convo_context.append({"user": input.text})
@@ -112,7 +114,7 @@ func new_conversation() -> void:
 
 
 func start_generation() -> void:
-	create_message()
+	create_message(Sender.ASSISTANT)
 
 	is_in_code_block = false
 	is_collecting_language = false
@@ -124,23 +126,28 @@ func start_generation() -> void:
 	LlmBackend.generate(input.text)
 
 
-func create_message() -> void:
-	var h_separator = HSeparator.new()
-	output_container.add_child(h_separator)
-
+func create_message(sender: Sender) -> void:
 	message = message_scene.instantiate()
 	output_container.add_child(message)
-	message_container = message.get_node("%MessageContainer")
-	create_rich_text_label()
+	message_container = message.get_node("%MessageContainer") as VBoxContainer
+	var text_label = create_rich_text_label()
+	if sender == Sender.USER:
+		var name_label := message_container.get_node("%NameLabel") as Label
+		var datetime_label := message_container.get_node("%DateTimeLabel") as Label
+		name_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		datetime_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
+		text_label.text_direction = Control.TEXT_DIRECTION_RTL
 
 
-func create_rich_text_label() -> void:
+func create_rich_text_label() -> RichTextLabel:
 	rich_text_label = RichTextLabel.new()
 	rich_text_label.fit_content = true
 	rich_text_label.bbcode_enabled = true
 	message_container.add_child(rich_text_label)
 	rich_text_label.text = ""
 	write_target = rich_text_label
+	return rich_text_label
 
 
 func create_code_block(language: String) -> void:

@@ -15,9 +15,11 @@ layout_mode = 2
 [node name="NameLabel" type="Label" parent="MessageContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 0
 text = "Name of sender"
 
 [node name="DateTimeLabel" type="Label" parent="MessageContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 0
 text = "1/1/2025 13:00"
