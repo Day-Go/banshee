@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://ck7s04by3rf5w"]
+[gd_scene load_steps=4 format=3 uid="uid://ck7s04by3rf5w"]
 
 [ext_resource type="PackedScene" uid="uid://b26mpqs2j5fjy" path="res://ui/convo_panel.tscn" id="1_eqt45"]
+[ext_resource type="Theme" uid="uid://ke47x6afpww7" path="res://assets/themes/global_theme.tres" id="1_hfym1"]
 [ext_resource type="PackedScene" uid="uid://quh3n0i6rbxy" path="res://ui/chat_panel.tscn" id="2_e6c4k"]
 
 [node name="Main" type="Control"]
@@ -10,12 +11,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_hfym1")
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 1.0
+offset_right = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 

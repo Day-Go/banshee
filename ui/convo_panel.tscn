@@ -15,23 +15,26 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 0.25
 script = ExtResource("1_wmeu1")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 2
 
-[node name="ConvoContainer" type="VBoxContainer" parent="ScrollContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="ConvoContainer" type="VBoxContainer" parent="MarginContainer/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/ConvoContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/ScrollContainer/ConvoContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ScrollContainer/ConvoContainer/HBoxContainer"]
+[node name="Label" type="Label" parent="MarginContainer/ScrollContainer/ConvoContainer/HBoxContainer"]
 layout_mode = 2
 text = "Conversations"
 
-[node name="CollapseButton" type="TextureButton" parent="ScrollContainer/ConvoContainer/HBoxContainer"]
+[node name="CollapseButton" type="TextureButton" parent="MarginContainer/ScrollContainer/ConvoContainer/HBoxContainer"]
 unique_name_in_owner = true
 texture_filter = 1
 custom_minimum_size = Vector2(30, 30)

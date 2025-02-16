@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c2dc5278nf1hm"]
+[gd_scene load_steps=3 format=3 uid="uid://c2dc5278nf1hm"]
 
 [ext_resource type="Script" path="res://ui/code_block.gd" id="1_tq851"]
+[ext_resource type="FontFile" uid="uid://d4muc5vgap3kg" path="res://assets/fonts/Atkinson Hyperlegible Mono/AtkinsonHyperlegibleMono-Regular.otf" id="2_17yh2"]
 
 [node name="CodeBlock" type="PanelContainer"]
 anchors_preset = 15
@@ -40,3 +41,5 @@ text = "Copy"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_fonts/normal_font = ExtResource("2_17yh2")
+theme_override_fonts/mono_font = ExtResource("2_17yh2")

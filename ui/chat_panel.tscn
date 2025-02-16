@@ -11,50 +11,53 @@ grow_vertical = 2
 size_flags_horizontal = 3
 script = ExtResource("1_qp12q")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ResponsePanel" type="PanelContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+[node name="ResponsePanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer/ResponsePanel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ResponsePanel"]
 unique_name_in_owner = true
 layout_mode = 2
 follow_focus = true
 
-[node name="OutputContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer/ResponsePanel/ScrollContainer"]
+[node name="OutputContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/ResponsePanel/ScrollContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="InputPanel" type="PanelContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+[node name="InputPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.25
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer/InputPanel"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/InputPanel"]
 layout_mode = 2
 
-[node name="InputTextArea" type="TextEdit" parent="VBoxContainer/HBoxContainer/VBoxContainer/InputPanel/HBoxContainer"]
+[node name="InputTextArea" type="TextEdit" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/InputPanel/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 wrap_mode = 1
 
-[node name="SendButton" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer/InputPanel/HBoxContainer"]
+[node name="SendButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/VBoxContainer/InputPanel/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
