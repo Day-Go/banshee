@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=5 format=3 uid="uid://ke47x6afpww7"]
+[gd_resource type="Theme" load_steps=6 format=3 uid="uid://ke47x6afpww7"]
 
 [ext_resource type="StyleBox" uid="uid://d1tttys7vwwib" path="res://assets/themes/textarea_theme.tres" id="1_7v8mc"]
 [ext_resource type="FontFile" uid="uid://c4orcsq8cp3nd" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-Regular.otf" id="1_73itm"]
@@ -18,6 +18,8 @@ corner_radius_bottom_left = 8
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdx2y"]
 bg_color = Color(0.099986, 0.099986, 0.099986, 1)
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_mc1l3"]
+
 [resource]
 Button/fonts/font = ExtResource("1_73itm")
 Button/styles/focus = SubResource("StyleBoxFlat_wjx51")
@@ -30,6 +32,7 @@ MarginContainer/constants/margin_right = 12
 MarginContainer/constants/margin_top = 12
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_xdx2y")
 RichTextLabel/fonts/normal_font = ExtResource("1_73itm")
+RichTextLabel/styles/focus = SubResource("StyleBoxEmpty_mc1l3")
 TextEdit/fonts/font = ExtResource("1_73itm")
 TextEdit/styles/focus = ExtResource("1_7v8mc")
 TextEdit/styles/normal = ExtResource("1_7v8mc")

@@ -62,8 +62,6 @@ func _on_model_selected(idx: int) -> void:
 
 func _on_generation_started() -> void:
 	button.disabled = true
-	if convo_id == -1:
-		convo_id = SqliteClient.create_conversation()
 
 
 func _on_generation_finished() -> void:
@@ -104,6 +102,9 @@ func _on_embedding_finished(content: String, embedding: Array) -> void:
 
 
 func _on_button_pressed() -> void:
+	if convo_id == -1:
+		convo_id = SqliteClient.create_conversation()
+
 	create_message(Sender.USER)
 	write_target.text = input.text
 
@@ -144,6 +145,7 @@ func load_convo(id: int) -> void:
 
 	# Render each message
 	for msg in messages:
+		print(msg)
 		# Create appropriate message type based on role
 		var sender = Sender.USER if msg.role == "user" else Sender.ASSISTANT
 
@@ -221,6 +223,7 @@ func create_rich_text_label() -> RichTextLabel:
 	rich_text_label = RichTextLabel.new()
 	rich_text_label.fit_content = true
 	rich_text_label.bbcode_enabled = true
+	rich_text_label.selection_enabled = true
 	message_container.add_child(rich_text_label)
 	rich_text_label.text = ""
 	write_target = rich_text_label

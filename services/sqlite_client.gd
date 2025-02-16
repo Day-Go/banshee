@@ -3,7 +3,7 @@ extends Node
 var db: SQLite = null
 const verbosity_level: int = SQLite.QUIET
 
-var db_name := "res://data/test"
+var db_name := "user://banshee"
 
 signal convo_created(convo: Dictionary)
 signal convo_title_updated(convo_id: int, title: String)
