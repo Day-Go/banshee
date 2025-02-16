@@ -10,7 +10,6 @@ extends Node
 var buffer := ""
 var write_target: RichTextLabel
 var is_in_code_block := false
-var is_in_inline_code := false
 var partial_backtick_sequence := ""
 var is_collecting_language := false
 var partial_language := ""
@@ -21,6 +20,8 @@ var language := ""
 var current_assistant_response := ""
 var message: PanelContainer
 var message_container: VBoxContainer
+var convo_id: int = -1
+var is_scrolling: bool = false
 
 
 func _ready() -> void:
@@ -31,21 +32,35 @@ func _ready() -> void:
 	LlmBackend.generation_finished.connect(_on_generation_finished)
 	LlmBackend.embedding_finished.connect(_on_embedding_finished)
 
-	input.text = "create blazor dropdown component that displays a list of users."
+	input.text = "write hello world in python"
 
-	SqliteClient.init_conversation()
+
+func set_convo_id(p_convo_id: int) -> void:
+	convo_id = p_convo_id
+
+
+func _input(event):
+	if event is InputEventMouseButton:
+		if (
+			event.button_index == MOUSE_BUTTON_WHEEL_UP
+			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN
+		):
+			is_scrolling = true
 
 
 func _on_generation_started() -> void:
 	button.disabled = true
+	if convo_id == -1:
+		convo_id = SqliteClient.create_conversation()
 
 
 func _on_generation_finished() -> void:
 	button.disabled = false
+	is_scrolling = false
 
 	if !current_assistant_response.is_empty():
 		var assistant_message_id = SqliteClient.save_message(
-			current_assistant_response, "assistant"
+			convo_id, current_assistant_response, "assistant"
 		)
 		if assistant_message_id == -1:
 			push_error("Failed to save assistant message")
@@ -76,7 +91,7 @@ func _on_button_pressed() -> void:
 	create_message()
 	write_target.text = input.text
 
-	var user_message_id = SqliteClient.save_message(input.text, "user")
+	var user_message_id = SqliteClient.save_message(convo_id, input.text, "user")
 	if user_message_id == -1:
 		push_error("Failed to save user message")
 
@@ -84,11 +99,15 @@ func _on_button_pressed() -> void:
 	input.text = ""
 
 
+func new_conversation() -> void:
+	# SqliteClient.create_conversation(title)
+	pass
+
+
 func start_generation() -> void:
 	create_message()
 
 	is_in_code_block = false
-	is_in_inline_code = false
 	is_collecting_language = false
 	partial_backtick_sequence = ""
 	partial_language = ""
@@ -183,4 +202,5 @@ func _on_chunk_processed(chunk: String) -> void:
 			i += 1
 
 	await get_tree().process_frame
-	scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
+	if !is_scrolling:
+		scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value

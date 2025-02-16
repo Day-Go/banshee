@@ -1,10 +1,9 @@
 extends Node
 
 var db: SQLite = null
-const verbosity_level: int = SQLite.VERBOSE
+const verbosity_level: int = SQLite.QUIET
 
 var db_name := "res://data/test"
-var current_conversation_id: int = -1
 
 signal output_received(text)
 
@@ -139,31 +138,17 @@ func create_tables(db: SQLite, schema: Dictionary) -> void:
 		print("Created table " + table_name + ": " + str(result))
 
 
-func init_conversation() -> void:
-	var init_query = """
-        SELECT id FROM conversations 
-        ORDER BY created_at DESC 
-        LIMIT 1;
-    """
-	if !db.query(init_query):  # No bindings needed for this query
-		push_error("Failed to check for existing conversations: " + db.error_message)
-		return
+func create_conversation() -> int:
+	var title: String = "New Conversation"
+	var convo_hash: String = generate_uuid()
 
-	if db.query_result.size() > 0:
-		current_conversation_id = db.query_result[0]["id"]
-	else:
-		# Create a new conversation if none exists
-		current_conversation_id = create_conversation()
-
-
-func create_conversation(title: String = "New Conversation") -> int:
-	var hash = generate_uuid()
+	print("No conversation found, creating a new conversation")
 
 	var convo_insert_query = """
         INSERT INTO conversations (hash, title)
         VALUES (?, ?);
     """
-	if !db.query_with_bindings(convo_insert_query, [hash, title]):
+	if !db.query_with_bindings(convo_insert_query, [convo_hash, title]):
 		push_error("Failed to insert conversation: " + db.error_message)
 		return -1
 
@@ -171,31 +156,33 @@ func create_conversation(title: String = "New Conversation") -> int:
         SELECT id FROM conversations 
         WHERE hash = ?;
     """
-	if !db.query_with_bindings(convo_id_query, [hash]):
+	if !db.query_with_bindings(convo_id_query, [convo_hash]):
 		push_error("Failed to get conversation ID: " + db.error_message)
 		return -1
 
 	if db.query_result.size() > 0:
-		current_conversation_id = db.query_result[0]["id"]
-		return current_conversation_id
+		return db.query_result[0]["id"]
 
-	push_error("No conversation found after insert")
+	push_error("Coudln't retrieve id of newly created conversation.")
 	return -1
 
 
-func save_message(content: String, role: String) -> int:
-	if current_conversation_id == -1:
-		# No active conversation, create one
-		current_conversation_id = create_conversation()
-		if current_conversation_id == -1:
-			push_error("Failed to create conversation for message")
-			return -1
+func update_conversation_title(convo_id: int, title: String) -> void:
+	var title_update_query := """
+		UPDATE conversations
+		SET title = ?
+		WHERE id = ?
+	"""
+	if !db.query_with_bindings(title_update_query, [title, convo_id]):
+		push_error("Couldn't update the title of conversation %s" % convo_id)
 
+
+func save_message(convo_id: int, content: String, role: String) -> int:
 	var message_insert_query = """
         INSERT INTO messages (conversation_id, content, role)
         VALUES (?, ?, ?);
     """
-	if !db.query_with_bindings(message_insert_query, [current_conversation_id, content, role]):
+	if !db.query_with_bindings(message_insert_query, [convo_id, content, role]):
 		push_error("Failed to insert message: " + db.error_message)
 		return -1
 
@@ -204,7 +191,7 @@ func save_message(content: String, role: String) -> int:
         WHERE conversation_id = ? 
         ORDER BY id DESC LIMIT 1;
     """
-	if !db.query_with_bindings(message_id_query, [current_conversation_id]):
+	if !db.query_with_bindings(message_id_query, [convo_id]):
 		push_error("Failed to get message ID: " + db.error_message)
 		return -1
 

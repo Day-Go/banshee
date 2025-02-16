@@ -21,7 +21,6 @@ func _ready() -> void:
 		or http.get_status() == HTTPClient.STATUS_RESOLVING
 	):
 		http.poll()
-		print("Connecting...")
 		await get_tree().process_frame
 
 	assert(http.get_status() == HTTPClient.STATUS_CONNECTED)
@@ -43,7 +42,6 @@ func generate(prompt: String) -> void:
 	var response_code = -1
 	while http.get_status() == HTTPClient.STATUS_REQUESTING:
 		http.poll()
-		print("Requesting...")
 		await get_tree().process_frame
 
 	if http.has_response():
