@@ -81,9 +81,7 @@ func _on_embedding_finished(content: String, embedding: Array) -> void:
         WHERE conversation_id = ? 
         ORDER BY id DESC LIMIT 1;
     """
-	if !SqliteClient.db.query_with_bindings(
-		message_id_query, [SqliteClient.current_conversation_id]
-	):
+	if !SqliteClient.db.query_with_bindings(message_id_query, [convo_id]):
 		push_error("Failed to get message for embedding: " + SqliteClient.db.error_message)
 		return
 
@@ -127,6 +125,9 @@ func start_generation() -> void:
 
 
 func create_message() -> void:
+	var h_separator = HSeparator.new()
+	output_container.add_child(h_separator)
+
 	message = message_scene.instantiate()
 	output_container.add_child(message)
 	message_container = message.get_node("%MessageContainer")
