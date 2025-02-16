@@ -5,6 +5,8 @@ signal embedding_finished
 signal generation_started(content: String, embedding: Array)
 signal generation_finished
 signal chunk_processed(chunk: String)
+signal title_creation_started
+signal title_creationg_finished(title: String)
 
 var http := HTTPClient.new()
 var headers := ["User-Agent: Pirulo/1.0 (Godot)", "Accept: */*"]
@@ -64,6 +66,48 @@ func generate(prompt: String) -> void:
 				chunk_processed.emit(parsed_chunk)
 
 	generation_finished.emit()
+
+
+func create_title(context: Array) -> String:
+	title_creation_started.emit()
+
+	var messages := "Create a concise, to-the-point, title for the following conversation: "
+	for message in context:
+		messages += JSON.stringify(message)
+
+	var json_data = {"model": "olmo2:latest", "prompt": messages, "stream": true}
+
+	err = http.request(HTTPClient.METHOD_POST, "/api/generate", headers, JSON.stringify(json_data))
+	if err != OK:
+		print("Request error: %s" % err)
+		return "Error"
+
+	var response_code = -1
+	while http.get_status() == HTTPClient.STATUS_REQUESTING:
+		http.poll()
+		await get_tree().process_frame
+
+	var title := ""
+	if http.has_response():
+		response_code = http.get_response_code()
+		if response_code != 200:
+			print("HTTP Error: %s" % response_code)
+			var error_body = http.get_response_body().get_string_from_utf8()
+			while http.get_response_body_length() > 0:
+				var chunk = http.read_response_body_chunk()
+				error_body.append_array(chunk)
+			print("Error body: %s" % error_body)
+
+		while http.get_status() == HTTPClient.STATUS_BODY:
+			http.poll()
+			var chunk = http.read_response_body_chunk()
+			if chunk.size() == 0:
+				await get_tree().process_frame
+			else:
+				var parsed_chunk = JSON.parse_string(chunk.get_string_from_ascii())["response"]
+				title += parsed_chunk
+
+	return title
 
 
 func embed(input: String) -> void:

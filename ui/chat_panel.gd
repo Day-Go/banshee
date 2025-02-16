@@ -22,6 +22,7 @@ var message: PanelContainer
 var message_container: VBoxContainer
 var convo_id: int = -1
 var is_scrolling: bool = false
+var convo_context := Array()
 
 
 func _ready() -> void:
@@ -58,13 +59,20 @@ func _on_generation_finished() -> void:
 	button.disabled = false
 	is_scrolling = false
 
+	convo_context.append({"assistant": current_assistant_response})
+
 	if !current_assistant_response.is_empty():
 		var assistant_message_id = SqliteClient.save_message(
 			convo_id, current_assistant_response, "assistant"
 		)
 		if assistant_message_id == -1:
 			push_error("Failed to save assistant message")
-		current_assistant_response = ""  # Reset for next generation
+		current_assistant_response = ""
+
+	if convo_context.size() == 2:
+		var title = await LlmBackend.create_title(convo_context)
+		print(title)
+		SqliteClient.update_conversation_title(convo_id, title.replace('"', ""))
 
 
 func _on_embedding_finished(content: String, embedding: Array) -> void:
@@ -90,6 +98,8 @@ func _on_embedding_finished(content: String, embedding: Array) -> void:
 func _on_button_pressed() -> void:
 	create_message()
 	write_target.text = input.text
+
+	convo_context.append({"user": input.text})
 
 	var user_message_id = SqliteClient.save_message(convo_id, input.text, "user")
 	if user_message_id == -1:
