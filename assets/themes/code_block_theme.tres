@@ -23,6 +23,7 @@ corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
 [resource]
+Button/font_sizes/font_size = 14
 Button/fonts/font = ExtResource("1_n1ncm")
 Button/styles/normal = SubResource("StyleBoxFlat_d53rf")
 Label/font_sizes/font_size = 16

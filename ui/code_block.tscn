@@ -32,23 +32,27 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 0
+size_flags_vertical = 1
 text = "gdscript"
+vertical_alignment = 2
 
 [node name="EmbedButton" type="Button" parent="MarginContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 30)
+custom_minimum_size = Vector2(70, 25)
 layout_mode = 2
 size_flags_horizontal = 8
 text = "Embed"
 
 [node name="CopyButton" type="Button" parent="MarginContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 30)
+custom_minimum_size = Vector2(70, 25)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0
 text = "Copy"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
 
 [node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
