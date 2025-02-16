@@ -4,7 +4,8 @@ extends PanelContainer
 @onready var collapse_button: TextureButton = %CollapseButton
 @onready var convo_container: VBoxContainer = %ConvoContainer
 
-var convos := Array()
+var convos := []
+var convo_cards := {}
 
 
 func _ready() -> void:
@@ -14,7 +15,6 @@ func _ready() -> void:
 
 	convos = SqliteClient.get_n_latest_convos(10)
 	for convo in convos:
-		print(convo)
 		create_convo_card(convo)
 
 
@@ -23,15 +23,18 @@ func _on_collapse_button_pressed() -> void:
 	pass
 
 
-func _on_convo_created(convo_id: int, title: String):
-	pass
+func _on_convo_created(convo: Dictionary) -> void:
+	var convo_card = create_convo_card(convo)
+	convo_container.move_child(convo_card, 1)
 
 
 func _on_convo_title_updated(convo_id: int, title: String):
-	pass
+	convo_cards[convo_id].set_title(title)
 
 
-func create_convo_card(convo: Dictionary) -> void:
+func create_convo_card(convo: Dictionary) -> PanelContainer:
 	var convo_card = convo_card_scene.instantiate()
 	convo_container.add_child(convo_card)
 	convo_card.set_data(convo)
+	convo_cards[convo["id"]] = convo_card
+	return convo_card

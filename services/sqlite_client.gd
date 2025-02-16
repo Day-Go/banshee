@@ -5,7 +5,7 @@ const verbosity_level: int = SQLite.QUIET
 
 var db_name := "res://data/test"
 
-signal convo_created(convo_id: int, title: String)
+signal convo_created(convo: Dictionary)
 signal convo_title_updated(convo_id: int, title: String)
 
 
@@ -149,7 +149,7 @@ func create_conversation() -> int:
 		return -1
 
 	var convo_id_query = """
-        SELECT id FROM conversations 
+        SELECT id, created_at FROM conversations 
         WHERE hash = ?;
     """
 	if !db.query_with_bindings(convo_id_query, [convo_hash]):
@@ -158,7 +158,13 @@ func create_conversation() -> int:
 
 	if db.query_result.size() > 0:
 		var convo_id = db.query_result[0]["id"]
-		convo_created.emit(convo_id, title)
+		var convo = {
+			"id": convo_id,
+			"hash": hash,
+			"title": title,
+			"created_at": db.query_result[0]["created_at"]
+		}
+		convo_created.emit(convo)
 		return convo_id
 
 	push_error("Coudln't retrieve id of newly created conversation.")

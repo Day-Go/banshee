@@ -9,6 +9,10 @@ func _ready() -> void:
 	pass
 
 
+func set_title(title: String) -> void:
+	title_label.text = title
+
+
 func set_data(data: Dictionary) -> void:
 	convo_id = data["id"]
 	title_label.text = data["title"]
