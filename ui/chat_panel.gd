@@ -16,8 +16,9 @@ var selected_model := "qwen2.5-coder:32b"
 var buffer := ""
 var write_target: RichTextLabel
 var is_in_code_block := false
-var partial_backtick_sequence := ""
 var is_collecting_language := false
+var is_scrolling := false
+var partial_backtick_sequence := ""
 var partial_language := ""
 var rich_text_label: RichTextLabel
 var code_block := ""
@@ -27,8 +28,7 @@ var current_assistant_response := ""
 var message: PanelContainer
 var message_container: VBoxContainer
 var convo_id: int = -1
-var is_scrolling: bool = false
-var convo_context := Array()
+var convo_context := []
 
 
 func _ready() -> void:
@@ -39,6 +39,7 @@ func _ready() -> void:
 	LlmBackend.generation_finished.connect(_on_generation_finished)
 	LlmBackend.embedding_finished.connect(_on_embedding_finished)
 	SignalBus.convo_selected.connect(load_convo)
+	SignalBus.new_convo_requested.connect(create_new_convo)
 
 	input.text = "write hello world in python"
 
@@ -128,7 +129,7 @@ func start_generation() -> void:
 	code_block = ""
 	language = ""
 	create_rich_text_label()
-	LlmBackend.generate(selected_model, input.text)
+	LlmBackend.generate(selected_model, convo_context)
 
 
 func load_convo(id: int) -> void:
@@ -145,7 +146,6 @@ func load_convo(id: int) -> void:
 
 	# Render each message
 	for msg in messages:
-		print(msg)
 		# Create appropriate message type based on role
 		var sender = Sender.USER if msg.role == "user" else Sender.ASSISTANT
 
@@ -196,6 +196,15 @@ func load_convo(id: int) -> void:
 	# Scroll to top after loading
 	await get_tree().process_frame
 	scroll_container.scroll_vertical = 0
+
+
+func create_new_convo() -> void:
+	for child in output_container.get_children():
+		child.queue_free()
+
+	# Reset conversation context and ID
+	convo_context.clear()
+	convo_id = -1
 
 
 func create_message(sender: Sender) -> void:

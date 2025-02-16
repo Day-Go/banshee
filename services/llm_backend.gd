@@ -30,11 +30,16 @@ func _ready() -> void:
 	buffer = ""
 
 
-func generate(model: String, prompt: String) -> void:
+func generate(model: String, messages: Array) -> void:
 	generation_started.emit()
 	buffer = ""
 
-	prompt += " Dont output any markdown when writing code blocks."
+	var prompt := ""
+	for message in messages:
+		prompt += JSON.stringify(message)
+
+	print(prompt)
+
 	var json_data = {"model": model, "prompt": prompt, "stream": true}
 
 	err = http.request(HTTPClient.METHOD_POST, "/api/generate", headers, JSON.stringify(json_data))

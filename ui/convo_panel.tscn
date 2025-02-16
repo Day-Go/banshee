@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://b26mpqs2j5fjy"]
+[gd_scene load_steps=5 format=3 uid="uid://b26mpqs2j5fjy"]
 
 [ext_resource type="Texture2D" uid="uid://cdcb4t33i38lm" path="res://assets/icons/menu_icon_normal.svg" id="1_hckah"]
 [ext_resource type="Script" path="res://ui/convo_panel.gd" id="1_wmeu1"]
 [ext_resource type="Texture2D" uid="uid://cp03r2b5ryq8k" path="res://assets/icons/menu_icon_hovered.svg" id="2_cprma"]
+[ext_resource type="Texture2D" uid="uid://6mlahfvauol2" path="res://assets/icons/add_icon_normal.svg" id="4_i0v1l"]
 
 [node name="ConvoPanel" type="PanelContainer"]
 anchors_preset = 15
@@ -26,6 +27,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme_override_constants/separation = 12
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/ScrollContainer/ConvoContainer"]
 layout_mode = 2
@@ -43,3 +45,11 @@ size_flags_horizontal = 10
 texture_normal = ExtResource("1_hckah")
 texture_hover = ExtResource("2_cprma")
 stretch_mode = 0
+
+[node name="NewConvoButton" type="Button" parent="MarginContainer/ScrollContainer/ConvoContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(165, 30)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "New Conversation"
+icon = ExtResource("4_i0v1l")
