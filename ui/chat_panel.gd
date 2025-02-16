@@ -126,18 +126,46 @@ func start_generation() -> void:
 	LlmBackend.generate(input.text)
 
 
+func get_formatted_datetime():
+	var dt = Time.get_datetime_dict_from_system()
+
+	# Convert 24-hour to 12-hour format with AM/PM
+	var hour = dt.hour
+	var period = "AM"
+	if hour >= 12:
+		period = "PM"
+		if hour > 12:
+			hour -= 12
+	elif hour == 0:
+		hour = 12
+
+	# Format with leading zeros where needed
+	var formatted = (
+		"%02d/%02d/%04d %02d:%02d %s" % [dt.day, dt.month, dt.year, hour, dt.minute, period]
+	)
+
+	return formatted
+
+
 func create_message(sender: Sender) -> void:
 	message = message_scene.instantiate()
 	output_container.add_child(message)
 	message_container = message.get_node("%MessageContainer") as VBoxContainer
+
 	var text_label = create_rich_text_label()
+	var name_label := message_container.get_node("%NameLabel") as Label
+	var datetime_label := message_container.get_node("%DateTimeLabel") as Label
+
 	if sender == Sender.USER:
-		var name_label := message_container.get_node("%NameLabel") as Label
-		var datetime_label := message_container.get_node("%DateTimeLabel") as Label
 		name_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		name_label.text = "User"
 		datetime_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+		datetime_label.text = get_formatted_datetime()
 		text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
 		text_label.text_direction = Control.TEXT_DIRECTION_RTL
+	else:
+		name_label.text = "Assistant"
+		datetime_label.visible = false
 
 
 func create_rich_text_label() -> RichTextLabel:
