@@ -3,9 +3,15 @@ extends Node
 @onready var message_scene = preload("res://ui/message.tscn")
 @onready var code_block_container_scene = preload("res://ui/code_block.tscn")
 @onready var scroll_container: ScrollContainer = %ScrollContainer
+@onready var model_dropdown: OptionButton = %ModelDropdown
 @onready var button: Button = %SendButton
 @onready var input: TextEdit = %InputTextArea
 @onready var output_container: VBoxContainer = %OutputContainer
+
+enum Sender { USER, ASSISTANT }
+
+var models := ["qwen2.5-coder:32b", "deepseek-r1:32b", "openthinker:32b", "olmo2:latest"]
+var selected_model := "qwen2.5-coder:32b"
 
 var buffer := ""
 var write_target: RichTextLabel
@@ -24,8 +30,6 @@ var convo_id: int = -1
 var is_scrolling: bool = false
 var convo_context := Array()
 
-enum Sender { USER, ASSISTANT }
-
 
 func _ready() -> void:
 	button.pressed.connect(_on_button_pressed)
@@ -34,12 +38,13 @@ func _ready() -> void:
 	LlmBackend.chunk_processed.connect(_on_chunk_processed)
 	LlmBackend.generation_finished.connect(_on_generation_finished)
 	LlmBackend.embedding_finished.connect(_on_embedding_finished)
+	SignalBus.convo_selected.connect(load_convo)
 
 	input.text = "write hello world in python"
 
-
-func set_convo_id(p_convo_id: int) -> void:
-	convo_id = p_convo_id
+	model_dropdown.item_selected.connect(_on_model_selected)
+	for model in models:
+		model_dropdown.add_item(model)
 
 
 func _input(event):
@@ -49,6 +54,10 @@ func _input(event):
 			or event.button_index == MOUSE_BUTTON_WHEEL_DOWN
 		):
 			is_scrolling = true
+
+
+func _on_model_selected(idx: int) -> void:
+	selected_model = model_dropdown.get_item_text(idx)
 
 
 func _on_generation_started() -> void:
@@ -108,11 +117,6 @@ func _on_button_pressed() -> void:
 	input.text = ""
 
 
-func new_conversation() -> void:
-	# SqliteClient.create_conversation(title)
-	pass
-
-
 func start_generation() -> void:
 	create_message(Sender.ASSISTANT)
 
@@ -123,28 +127,73 @@ func start_generation() -> void:
 	code_block = ""
 	language = ""
 	create_rich_text_label()
-	LlmBackend.generate(input.text)
+	LlmBackend.generate(selected_model, input.text)
 
 
-func get_formatted_datetime():
-	var dt = Time.get_datetime_dict_from_system()
+func load_convo(id: int) -> void:
+	# Clear existing messages
+	for child in output_container.get_children():
+		child.queue_free()
 
-	# Convert 24-hour to 12-hour format with AM/PM
-	var hour = dt.hour
-	var period = "AM"
-	if hour >= 12:
-		period = "PM"
-		if hour > 12:
-			hour -= 12
-	elif hour == 0:
-		hour = 12
+	# Reset conversation context and ID
+	convo_context.clear()
+	convo_id = id
 
-	# Format with leading zeros where needed
-	var formatted = (
-		"%02d/%02d/%04d %02d:%02d %s" % [dt.day, dt.month, dt.year, hour, dt.minute, period]
-	)
+	# Get all messages for this conversation
+	var messages = SqliteClient.get_conversation_messages(id)
 
-	return formatted
+	# Render each message
+	for msg in messages:
+		# Create appropriate message type based on role
+		var sender = Sender.USER if msg.role == "user" else Sender.ASSISTANT
+
+		# Create message container
+		message = message_scene.instantiate()
+		output_container.add_child(message)
+		message_container = message.get_node("%MessageContainer") as VBoxContainer
+
+		# Set up labels
+		var name_label := message_container.get_node("%NameLabel") as Label
+		var datetime_label := message_container.get_node("%DateTimeLabel") as Label
+
+		if sender == Sender.USER:
+			name_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+			name_label.text = "User"
+			datetime_label.size_flags_horizontal = Control.SIZE_SHRINK_END
+			datetime_label.text = msg.created_at
+
+			# Create and configure text label for user message
+			var text_label = create_rich_text_label()
+			text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
+			text_label.text_direction = Control.TEXT_DIRECTION_RTL
+			text_label.text = msg.content
+		else:
+			name_label.text = "Assistant"
+			datetime_label.visible = false
+
+			# Process assistant message with code block handling
+			is_in_code_block = false
+			is_collecting_language = false
+			partial_backtick_sequence = ""
+			partial_language = ""
+			code_block = ""
+			language = ""
+
+			# Create initial rich text label
+			create_rich_text_label()
+
+			# Process the message content
+			_on_chunk_processed(msg.content)
+
+		# Add to conversation context
+		if sender == Sender.USER:
+			convo_context.append({"user": msg.content})
+		else:
+			convo_context.append({"assistant": msg.content})
+
+	# Scroll to top after loading
+	await get_tree().process_frame
+	scroll_container.scroll_vertical = 0
 
 
 func create_message(sender: Sender) -> void:
@@ -249,3 +298,24 @@ func _on_chunk_processed(chunk: String) -> void:
 	await get_tree().process_frame
 	if !is_scrolling:
 		scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
+
+
+func get_formatted_datetime():
+	var dt = Time.get_datetime_dict_from_system()
+
+	# Convert 24-hour to 12-hour format with AM/PM
+	var hour = dt.hour
+	var period = "AM"
+	if hour >= 12:
+		period = "PM"
+		if hour > 12:
+			hour -= 12
+	elif hour == 0:
+		hour = 12
+
+	# Format with leading zeros where needed
+	var formatted = (
+		"%02d/%02d/%04d %02d:%02d %s" % [dt.day, dt.month, dt.year, hour, dt.minute, period]
+	)
+
+	return formatted

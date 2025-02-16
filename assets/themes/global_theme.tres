@@ -1,8 +1,7 @@
-[gd_resource type="Theme" load_steps=6 format=3 uid="uid://ke47x6afpww7"]
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://ke47x6afpww7"]
 
 [ext_resource type="StyleBox" uid="uid://d1tttys7vwwib" path="res://assets/themes/textarea_theme.tres" id="1_7v8mc"]
 [ext_resource type="FontFile" uid="uid://c4orcsq8cp3nd" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-Regular.otf" id="1_73itm"]
-[ext_resource type="FontFile" uid="uid://c63dyk7s73q8w" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-Bold.otf" id="1_f1r44"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wjx51"]
 bg_color = Color(0.166924, 0.196303, 0.173355, 1)
@@ -20,7 +19,9 @@ corner_radius_bottom_left = 8
 bg_color = Color(0.099986, 0.099986, 0.099986, 1)
 
 [resource]
-Button/fonts/font = ExtResource("1_f1r44")
+Button/fonts/font = ExtResource("1_73itm")
+Button/styles/focus = SubResource("StyleBoxFlat_wjx51")
+Button/styles/hover = SubResource("StyleBoxFlat_wjx51")
 Button/styles/normal = SubResource("StyleBoxFlat_wjx51")
 Label/fonts/font = ExtResource("1_73itm")
 MarginContainer/constants/margin_bottom = 12

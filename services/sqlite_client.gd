@@ -183,6 +183,24 @@ func update_conversation_title(convo_id: int, title: String) -> void:
 	convo_title_updated.emit(convo_id, title)
 
 
+func get_conversation_messages(convo_id: int) -> Array:
+	var messages_query = """
+        SELECT content, role, created_at 
+        FROM messages 
+        WHERE conversation_id = ? 
+        ORDER BY created_at ASC;
+    """
+	if !db.query_with_bindings(messages_query, [convo_id]):
+		push_error(
+			"Failed to retrieve messages for conversation %s: %s" % [convo_id, db.error_message]
+		)
+		return []
+
+	if db.query_result.size() > 0:
+		return db.query_result
+	return []
+
+
 func save_message(convo_id: int, content: String, role: String) -> int:
 	var message_insert_query = """
         INSERT INTO messages (conversation_id, content, role)

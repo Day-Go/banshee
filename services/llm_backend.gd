@@ -30,11 +30,12 @@ func _ready() -> void:
 	buffer = ""
 
 
-func generate(prompt: String) -> void:
+func generate(model: String, prompt: String) -> void:
 	generation_started.emit()
 	buffer = ""
 
-	var json_data = {"model": "qwen2.5-coder:32b", "prompt": prompt, "stream": true}
+	prompt += " Dont output any markdown when writing code blocks."
+	var json_data = {"model": model, "prompt": prompt, "stream": true}
 
 	err = http.request(HTTPClient.METHOD_POST, "/api/generate", headers, JSON.stringify(json_data))
 	if err != OK:
