@@ -1,0 +1,9 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://0bo6ll4rc0y"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1eu2y"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_q4r8b"]
+
+[resource]
+VScrollBar/styles/grabber = SubResource("StyleBoxEmpty_1eu2y")
+VScrollBar/styles/scroll = SubResource("StyleBoxEmpty_q4r8b")

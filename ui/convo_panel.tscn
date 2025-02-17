@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://b26mpqs2j5fjy"]
+[gd_scene load_steps=6 format=3 uid="uid://b26mpqs2j5fjy"]
 
 [ext_resource type="Texture2D" uid="uid://cdcb4t33i38lm" path="res://assets/icons/menu_icon_normal.svg" id="1_hckah"]
 [ext_resource type="Script" path="res://ui/convo_panel.gd" id="1_wmeu1"]
 [ext_resource type="Texture2D" uid="uid://cp03r2b5ryq8k" path="res://assets/icons/menu_icon_hovered.svg" id="2_cprma"]
+[ext_resource type="Theme" uid="uid://0bo6ll4rc0y" path="res://assets/themes/invisible_vertical_scrollbar.tres" id="2_iexbp"]
 [ext_resource type="Texture2D" uid="uid://6mlahfvauol2" path="res://assets/icons/add_icon_normal.svg" id="4_i0v1l"]
 
 [node name="ConvoPanel" type="PanelContainer"]
@@ -21,6 +22,7 @@ layout_mode = 2
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer"]
 layout_mode = 2
+theme = ExtResource("2_iexbp")
 
 [node name="ConvoContainer" type="VBoxContainer" parent="MarginContainer/ScrollContainer"]
 unique_name_in_owner = true
