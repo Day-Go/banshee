@@ -224,7 +224,7 @@ func create_message(sender: Sender) -> void:
 		text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
 		text_label.text_direction = Control.TEXT_DIRECTION_RTL
 	else:
-		name_label.text = "Assistant"
+		name_label.text = selected_model
 		datetime_label.visible = false
 
 
