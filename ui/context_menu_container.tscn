@@ -1,0 +1,27 @@
+[gd_scene load_steps=2 format=3 uid="uid://dfc2ys68k3x2j"]
+
+[ext_resource type="Script" path="res://ui/context_menu_container.gd" id="1_bsgb8"]
+
+[node name="ContextMenuContainer" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 26)
+script = ExtResource("1_bsgb8")
+
+[node name="MenuBar" type="MenuBar" parent="."]
+layout_mode = 2
+
+[node name="File" type="PopupMenu" parent="MenuBar"]
+unique_name_in_owner = true
+auto_translate_mode = 1
+item_count = 2
+item_0/text = "Load files..."
+item_1/id = 1
+
+[node name="View" type="PopupMenu" parent="MenuBar"]
+unique_name_in_owner = true
+auto_translate_mode = 1
+item_count = 3
+item_0/text = "Chat"
+item_1/text = "Graph"
+item_1/id = 1
+item_2/text = "Timeline"
+item_2/id = 2

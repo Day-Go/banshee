@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://ck7s04by3rf5w"]
+[gd_scene load_steps=5 format=3 uid="uid://ck7s04by3rf5w"]
 
 [ext_resource type="PackedScene" uid="uid://b26mpqs2j5fjy" path="res://ui/convo_panel.tscn" id="1_eqt45"]
 [ext_resource type="Theme" uid="uid://ke47x6afpww7" path="res://assets/themes/global_theme.tres" id="1_hfym1"]
 [ext_resource type="PackedScene" uid="uid://quh3n0i6rbxy" path="res://ui/chat_panel.tscn" id="2_e6c4k"]
+[ext_resource type="PackedScene" uid="uid://dfc2ys68k3x2j" path="res://ui/context_menu_container.tscn" id="2_qb4m8"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -13,18 +14,24 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_hfym1")
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 1.0
-offset_right = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 0
 
-[node name="ConvoPanel" parent="HBoxContainer2" instance=ExtResource("1_eqt45")]
+[node name="ContextMenuContainer" parent="VBoxContainer" instance=ExtResource("2_qb4m8")]
 layout_mode = 2
 
-[node name="ChatPanel" parent="HBoxContainer2" instance=ExtResource("2_e6c4k")]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConvoPanel" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("1_eqt45")]
+layout_mode = 2
+
+[node name="ChatPanel" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("2_e6c4k")]
 layout_mode = 2

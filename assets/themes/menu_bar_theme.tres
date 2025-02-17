@@ -1,0 +1,18 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://dr2uu25w3q5nf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hlbmg"]
+bg_color = Color(0.370364, 0.370365, 0.370364, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q0fnk"]
+bg_color = Color(0.188216, 0.19145, 0.192834, 1)
+
+[resource]
+MenuBar/colors/font_focus_color = Color(0.94902, 0.94902, 0.94902, 0)
+MenuBar/constants/h_separation = 2
+MenuBar/constants/outline_size = 2
+MenuButton/styles/normal = SubResource("StyleBoxFlat_hlbmg")
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_q0fnk")

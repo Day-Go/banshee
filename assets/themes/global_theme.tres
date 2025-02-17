@@ -1,7 +1,8 @@
-[gd_resource type="Theme" load_steps=6 format=3 uid="uid://ke47x6afpww7"]
+[gd_resource type="Theme" load_steps=7 format=3 uid="uid://ke47x6afpww7"]
 
 [ext_resource type="StyleBox" uid="uid://d1tttys7vwwib" path="res://assets/themes/textarea_theme.tres" id="1_7v8mc"]
 [ext_resource type="FontFile" uid="uid://c4orcsq8cp3nd" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-Regular.otf" id="1_73itm"]
+[ext_resource type="FontFile" uid="uid://ddhpo714172c0" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-SemiBold.otf" id="2_pg6ue"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wjx51"]
 bg_color = Color(0.166924, 0.196303, 0.173355, 1)
@@ -31,6 +32,7 @@ MarginContainer/constants/margin_left = 12
 MarginContainer/constants/margin_right = 12
 MarginContainer/constants/margin_top = 12
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_xdx2y")
+PopupMenu/fonts/font = ExtResource("2_pg6ue")
 RichTextLabel/fonts/normal_font = ExtResource("1_73itm")
 RichTextLabel/styles/focus = SubResource("StyleBoxEmpty_mc1l3")
 TextEdit/fonts/font = ExtResource("1_73itm")
