@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://cptsddwwibiwu"]
+
+[node name="ThinkSpace" type="SubViewportContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SubViewport" type="SubViewport" parent="."]

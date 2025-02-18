@@ -171,6 +171,23 @@ func create_conversation() -> int:
 	return -1
 
 
+func get_latest_message_id(convo_id: int) -> int:
+	var message_id_query = """
+        SELECT id FROM messages 
+        WHERE conversation_id = ? 
+        ORDER BY id DESC LIMIT 1;
+    """
+	if !SqliteClient.db.query_with_bindings(message_id_query, [convo_id]):
+		push_error("Failed to get message for embedding: " + SqliteClient.db.error_message)
+		return -1
+
+	if SqliteClient.db.query_result.size() > 0:
+		var message_id: int = SqliteClient.db.query_result[0]["id"]
+		return message_id
+
+	return -1
+
+
 func update_conversation_title(convo_id: int, title: String) -> void:
 	var title_update_query := """
 		UPDATE conversations

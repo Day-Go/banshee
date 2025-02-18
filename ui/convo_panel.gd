@@ -15,7 +15,7 @@ func _ready() -> void:
 	SqliteClient.convo_created.connect(_on_convo_created)
 	SqliteClient.convo_title_updated.connect(_on_convo_title_updated)
 
-	convos = SqliteClient.get_n_latest_convos(10)
+	convos = SqliteClient.get_n_latest_convos(100)
 	for convo in convos:
 		create_convo_card(convo)
 

@@ -92,17 +92,9 @@ func _on_generation_finished() -> void:
 
 func _on_embedding_finished(content: String, embedding: Array) -> void:
 	print("Inserting embedding")
-	var message_id_query = """
-        SELECT id FROM messages 
-        WHERE conversation_id = ? 
-        ORDER BY id DESC LIMIT 1;
-    """
-	if !SqliteClient.db.query_with_bindings(message_id_query, [convo_id]):
-		push_error("Failed to get message for embedding: " + SqliteClient.db.error_message)
-		return
 
-	if SqliteClient.db.query_result.size() > 0:
-		var message_id = SqliteClient.db.query_result[0]["id"]
+	var message_id: int = SqliteClient.get_latest_message_id(convo_id)
+	if message_id > 0:
 		SqliteClient.insert_embedding(message_id, content, embedding)
 	else:
 		push_error("No message found for embedding")

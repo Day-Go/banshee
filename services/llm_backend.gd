@@ -77,7 +77,7 @@ func generate(model: String, messages: Array) -> void:
 func create_title(context: Array) -> String:
 	title_creation_started.emit()
 
-	var messages := "Create a concise, to-the-point, title for the following conversation: "
+	var messages := "Create a concise, single-sentence title for the following conversation: \n"
 	for message in context:
 		messages += JSON.stringify(message)
 
