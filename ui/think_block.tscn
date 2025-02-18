@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3 uid="uid://cminu85ofsghh"]
+
+[ext_resource type="Theme" uid="uid://c6y7ahbcljjaf" path="res://assets/themes/think_block_theme.tres" id="1_y1hg4"]
+[ext_resource type="Script" path="res://ui/think_block.gd" id="2_vmv24"]
+
+[node name="ThinkBlock" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_y1hg4")
+script = ExtResource("2_vmv24")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
+
+[node name="TextArea" type="RichTextLabel" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2

@@ -21,6 +21,10 @@ LlmBackend="*res://services/llm_backend.gd"
 SqliteClient="*res://services/sqlite_client.gd"
 SignalBus="*res://services/signal_bus.gd"
 
+[display]
+
+window/size/mode=2
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg")

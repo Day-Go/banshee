@@ -26,12 +26,20 @@ theme_override_constants/separation = 0
 [node name="ContextMenuContainer" parent="VBoxContainer" instance=ExtResource("2_qb4m8")]
 layout_mode = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ConvoPanel" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("1_eqt45")]
+[node name="ChatGroup" type="HBoxContainer" parent="VBoxContainer/PanelContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConvoPanel" parent="VBoxContainer/PanelContainer/ChatGroup" instance=ExtResource("1_eqt45")]
 layout_mode = 2
 
-[node name="ChatPanel" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("2_e6c4k")]
+[node name="ChatPanel" parent="VBoxContainer/PanelContainer/ChatGroup" instance=ExtResource("2_e6c4k")]
+layout_mode = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/PanelContainer"]
+visible = false
 layout_mode = 2

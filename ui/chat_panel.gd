@@ -1,7 +1,8 @@
 extends Node
 
 @onready var message_scene = preload("res://ui/message.tscn")
-@onready var code_block_container_scene = preload("res://ui/code_block.tscn")
+@onready var code_block_scene = preload("res://ui/code_block.tscn")
+@onready var think_block_scene = preload("res://ui/think_block.tscn")
 @onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var model_dropdown: OptionButton = %ModelDropdown
 @onready var button: Button = %SendButton
@@ -10,15 +11,20 @@ extends Node
 
 enum Sender { USER, ASSISTANT }
 
-var models := ["qwen2.5-coder:32b", "deepseek-r1:32b", "openthinker:32b", "olmo2:latest"]
-var selected_model := "qwen2.5-coder:32b"
+var models := ["deepseek-r1:32b", "qwen2.5-coder:32b", "openthinker:32b", "olmo2:latest"]
+var selected_model := "deepseek-r1:32b"
+
+var thought_begin_patterns = ["<|begin_of_thought|>", "<think>"]
+var thought_end_patterns = ["<|end_of_thought|>", "</think>"]
 
 var buffer := ""
 var write_target: RichTextLabel
 var is_in_code_block := false
 var is_collecting_language := false
+var is_in_think_block := false
 var is_scrolling := false
 var partial_backtick_sequence := ""
+var partial_thought_pattern := ""
 var partial_language := ""
 var rich_text_label: RichTextLabel
 var code_block := ""
@@ -123,8 +129,10 @@ func start_generation() -> void:
 	create_message(Sender.ASSISTANT)
 
 	is_in_code_block = false
+	is_in_think_block = false
 	is_collecting_language = false
 	partial_backtick_sequence = ""
+	partial_thought_pattern = ""
 	partial_language = ""
 	code_block = ""
 	language = ""
@@ -175,8 +183,10 @@ func load_convo(id: int) -> void:
 
 			# Process assistant message with code block handling
 			is_in_code_block = false
+			is_in_think_block = false
 			is_collecting_language = false
 			partial_backtick_sequence = ""
+			partial_thought_pattern = ""
 			partial_language = ""
 			code_block = ""
 			language = ""
@@ -240,27 +250,78 @@ func create_rich_text_label() -> RichTextLabel:
 
 
 func create_code_block(language: String) -> void:
-	var code_block_container = code_block_container_scene.instantiate()
-	message_container.add_child(code_block_container)
-	code_block_container.set_language(language.strip_edges())
-	write_target = code_block_container.get_code_area()
+	var code_block = code_block_scene.instantiate()
+	message_container.add_child(code_block)
+	code_block.set_language(language.strip_edges())
+	write_target = code_block.get_code_area()
+
+
+func create_think_block() -> void:
+	var think_block = think_block_scene.instantiate()
+	message_container.add_child(think_block)
+	write_target = think_block.get_node("%TextArea") as RichTextLabel
+	# Ensure the write target is valid
+	if write_target == null:
+		push_error("Failed to get %TextArea in think block")
+		create_rich_text_label()  # Fallback to regular text if something went wrong
 
 
 func _on_chunk_processed(chunk: String) -> void:
 	current_assistant_response += chunk
 
-	# First, handle any remaining backticks from previous chunk
+	# Handle any remaining patterns from previous chunk
 	if partial_backtick_sequence.length() > 0:
 		chunk = partial_backtick_sequence + chunk
 		partial_backtick_sequence = ""
+
+	if partial_thought_pattern.length() > 0:
+		print("Processing partial thought pattern: ", partial_thought_pattern)
+		chunk = partial_thought_pattern + chunk
+		partial_thought_pattern = ""
 
 	var i := 0
 	while i < chunk.length():
 		var char = chunk[i]
 		var remaining_chunk = chunk.substr(i)
 
-		# Check for triple backticks
-		if remaining_chunk.begins_with("```"):
+		# Check for think block patterns
+		var is_think_begin = false
+		var is_think_end = false
+		var pattern_length = 0
+		var matched_pattern = ""
+
+		for pattern in thought_begin_patterns:
+			if remaining_chunk.begins_with(pattern):
+				is_think_begin = true
+				pattern_length = pattern.length()
+				matched_pattern = pattern
+				break
+
+		for pattern in thought_end_patterns:
+			if remaining_chunk.begins_with(pattern):
+				is_think_end = true
+				pattern_length = pattern.length()
+				matched_pattern = pattern
+				break
+
+		# Handle think block start
+		if is_think_begin and !is_in_think_block and !is_in_code_block:
+			is_in_think_block = true
+			create_think_block()
+			print("Think block started with pattern: ", matched_pattern)
+			i += pattern_length
+			continue
+
+		# Handle think block end
+		elif is_think_end and is_in_think_block:
+			is_in_think_block = false
+			print("Think block ended with pattern: ", matched_pattern)
+			create_rich_text_label()
+			i += pattern_length
+			continue
+
+		# Check for triple backticks (only process if not in think block)
+		if !is_in_think_block and remaining_chunk.begins_with("```"):
 			if !is_in_code_block:
 				# Starting a code block
 				is_in_code_block = true
@@ -273,8 +334,8 @@ func _on_chunk_processed(chunk: String) -> void:
 			i += 3
 			continue
 
-		# Check for single backtick (inline code)
-		elif char == "`" and !is_in_code_block:
+		# Check for single backtick (inline code) - only process if not in think block
+		elif char == "`" and !is_in_code_block and !is_in_think_block:
 			# Just write the backtick as-is
 			write_target.append_text(char)
 			i += 1
@@ -293,18 +354,44 @@ func _on_chunk_processed(chunk: String) -> void:
 				i += 1
 			continue
 
-		# Check for potential partial backticks at chunk end
-		if i >= chunk.length() - 3:
+		# Check for potential partial patterns at chunk end
+		if i >= chunk.length() - 20:  # Allow for longest think pattern
 			var remaining = chunk.substr(i)
-			# If we're at the end and see backticks, store them for next chunk
-			if remaining.begins_with("`"):
+
+			# First check for partial think patterns at end (higher priority)
+			var found_partial_pattern = false
+			for pattern in thought_begin_patterns + thought_end_patterns:
+				if (
+					pattern.begins_with(remaining)
+					or remaining.begins_with(pattern.substr(0, remaining.length()))
+				):
+					partial_thought_pattern = remaining
+					found_partial_pattern = true
+					print("Found partial thought pattern at end: ", remaining)
+					break
+
+			# Then check for partial backticks at end
+			if !found_partial_pattern and remaining.begins_with("`") and !is_in_think_block:
 				partial_backtick_sequence = remaining
 				break
+
+			if found_partial_pattern:
+				break
 			else:
-				write_target.append_text(char)
+				if write_target != null:
+					write_target.append_text(char)
+				else:
+					push_error("Write target is null when trying to append text")
+					create_rich_text_label()
+					write_target.append_text(char)
 				i += 1
 		else:
-			write_target.append_text(char)
+			if write_target != null:
+				write_target.append_text(char)
+			else:
+				push_error("Write target is null when trying to append text")
+				create_rich_text_label()
+				write_target.append_text(char)
 			i += 1
 
 	await get_tree().process_frame

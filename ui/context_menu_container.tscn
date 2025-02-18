@@ -16,6 +16,8 @@ item_count = 2
 item_0/text = "Load files..."
 item_1/id = 1
 
+[node name="Edit" type="PopupMenu" parent="MenuBar"]
+
 [node name="View" type="PopupMenu" parent="MenuBar"]
 unique_name_in_owner = true
 auto_translate_mode = 1
