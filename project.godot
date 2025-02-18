@@ -20,6 +20,7 @@ config/icon="res://assets/icon.svg"
 LlmBackend="*res://services/llm_backend.gd"
 SqliteClient="*res://services/sqlite_client.gd"
 SignalBus="*res://services/signal_bus.gd"
+Utils="*res://misc/utils.gd"
 
 [display]
 

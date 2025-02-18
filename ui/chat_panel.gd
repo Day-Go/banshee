@@ -222,7 +222,7 @@ func create_message(sender: Sender) -> void:
 		name_label.size_flags_horizontal = Control.SIZE_SHRINK_END
 		name_label.text = "User"
 		datetime_label.size_flags_horizontal = Control.SIZE_SHRINK_END
-		datetime_label.text = get_formatted_datetime()
+		datetime_label.text = Utils.get_formatted_datetime()
 		text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
 		text_label.text_direction = Control.TEXT_DIRECTION_RTL
 	else:
@@ -389,24 +389,3 @@ func _on_chunk_processed(chunk: String) -> void:
 	await get_tree().process_frame
 	if !is_scrolling:
 		scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
-
-
-func get_formatted_datetime():
-	var dt = Time.get_datetime_dict_from_system()
-
-	# Convert 24-hour to 12-hour format with AM/PM
-	var hour = dt.hour
-	var period = "AM"
-	if hour >= 12:
-		period = "PM"
-		if hour > 12:
-			hour -= 12
-	elif hour == 0:
-		hour = 12
-
-	# Format with leading zeros where needed
-	var formatted = (
-		"%02d/%02d/%04d %02d:%02d %s" % [dt.day, dt.month, dt.year, hour, dt.minute, period]
-	)
-
-	return formatted
