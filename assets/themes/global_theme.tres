@@ -5,16 +5,16 @@
 [ext_resource type="FontFile" uid="uid://ddhpo714172c0" path="res://assets/fonts/Atkinson Hyperlegible Next/AtkinsonHyperlegibleNext-SemiBold.otf" id="2_pg6ue"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wjx51"]
-bg_color = Color(0.166924, 0.196303, 0.173355, 1)
+bg_color = Color(0.0173142, 0.023458, 0.0185688, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0.489622, 0.489622, 0.489622, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xdx2y"]
 bg_color = Color(0.099986, 0.099986, 0.099986, 1)
