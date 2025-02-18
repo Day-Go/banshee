@@ -13,6 +13,8 @@ enum Sender { USER, ASSISTANT }
 
 var models := ["deepseek-r1:32b", "qwen2.5-coder:32b", "openthinker:32b", "olmo2:latest"]
 var selected_model := "deepseek-r1:32b"
+var embedding_queue := []
+var embedding_in_use := false
 
 var thought_begin_patterns = ["<|begin_of_thought|>", "<think>"]
 var thought_end_patterns = ["<|end_of_thought|>", "</think>"]
@@ -29,6 +31,7 @@ var partial_language := ""
 var rich_text_label: RichTextLabel
 var code_block := ""
 var language := ""
+var current_paragraph := ""
 
 var current_assistant_response := ""
 var message: PanelContainer
@@ -43,7 +46,9 @@ func _ready() -> void:
 	LlmBackend.generation_started.connect(_on_generation_started)
 	LlmBackend.chunk_processed.connect(_on_chunk_processed)
 	LlmBackend.generation_finished.connect(_on_generation_finished)
-	LlmBackend.embedding_finished.connect(_on_embedding_finished)
+	LlmBackend.embedding_started.connect(_on_embedding_started)
+	LlmBackend.embedding_ready_to_save.connect(_on_embedding_finished)
+	LlmBackend.embedding_ready_to_process.connect(_on_embedding_ready)
 	SignalBus.convo_selected.connect(load_convo)
 	SignalBus.new_convo_requested.connect(create_new_convo)
 
@@ -90,14 +95,23 @@ func _on_generation_finished() -> void:
 		SqliteClient.update_conversation_title(convo_id, title.replace('"', ""))
 
 
-func _on_embedding_finished(content: String, embedding: Array) -> void:
-	print("Inserting embedding")
+func _on_embedding_started() -> void:
+	embedding_in_use = true
 
+
+func _on_embedding_finished(content: String, embedding: Array) -> void:
 	var message_id: int = SqliteClient.get_latest_message_id(convo_id)
 	if message_id > 0:
 		SqliteClient.insert_embedding(message_id, content, embedding)
 	else:
 		push_error("No message found for embedding")
+
+
+func _on_embedding_ready(embedding: Array) -> void:
+	print("embedding is ready")
+	embedding_queue.pop_front()
+	if !embedding_queue.is_empty():
+		LlmBackend.embed(embedding_queue[0], false)
 
 
 func _on_button_pressed() -> void:
@@ -128,6 +142,7 @@ func start_generation() -> void:
 	partial_language = ""
 	code_block = ""
 	language = ""
+	current_paragraph = ""
 	create_rich_text_label()
 	LlmBackend.generate(selected_model, convo_context)
 
@@ -222,7 +237,7 @@ func create_message(sender: Sender) -> void:
 		name_label.size_flags_horizontal = Control.SIZE_SHRINK_END
 		name_label.text = "User"
 		datetime_label.size_flags_horizontal = Control.SIZE_SHRINK_END
-		datetime_label.text = Utils.get_formatted_datetime()
+		datetime_label.text = get_formatted_datetime()
 		text_label.size_flags_horizontal = Control.SIZE_SHRINK_END | Control.SIZE_FILL
 		text_label.text_direction = Control.TEXT_DIRECTION_RTL
 	else:
@@ -299,6 +314,7 @@ func _on_chunk_processed(chunk: String) -> void:
 		# Handle think block start
 		if is_think_begin and !is_in_think_block and !is_in_code_block:
 			is_in_think_block = true
+			current_paragraph = ""  # Reset paragraph tracking
 			create_think_block()
 			print("Think block started with pattern: ", matched_pattern)
 			i += pattern_length
@@ -306,7 +322,12 @@ func _on_chunk_processed(chunk: String) -> void:
 
 		# Handle think block end
 		elif is_think_end and is_in_think_block:
+			# Process any final paragraph if it exists
+			if current_paragraph.strip_edges() != "":
+				process_completed_paragraph()
+
 			is_in_think_block = false
+			current_paragraph = ""  # Reset paragraph tracking
 			print("Think block ended with pattern: ", matched_pattern)
 			create_rich_text_label()
 			i += pattern_length
@@ -371,7 +392,18 @@ func _on_chunk_processed(chunk: String) -> void:
 				break
 			else:
 				if write_target != null:
+					# Check for newlines if in think block
+					if is_in_think_block and char == "\n":
+						process_completed_paragraph()
+
 					write_target.append_text(char)
+
+					# Track current paragraph if in think block
+					if is_in_think_block:
+						if char == "\n":
+							current_paragraph = ""
+						else:
+							current_paragraph += char
 				else:
 					push_error("Write target is null when trying to append text")
 					create_rich_text_label()
@@ -379,7 +411,18 @@ func _on_chunk_processed(chunk: String) -> void:
 				i += 1
 		else:
 			if write_target != null:
+				# Check for newlines if in think block
+				if is_in_think_block and char == "\n":
+					process_completed_paragraph()
+
 				write_target.append_text(char)
+
+				# Track current paragraph if in think block
+				if is_in_think_block:
+					if char == "\n":
+						current_paragraph = ""
+					else:
+						current_paragraph += char
 			else:
 				push_error("Write target is null when trying to append text")
 				create_rich_text_label()
@@ -389,3 +432,33 @@ func _on_chunk_processed(chunk: String) -> void:
 	await get_tree().process_frame
 	if !is_scrolling:
 		scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
+
+
+func process_completed_paragraph() -> void:
+	if current_paragraph.strip_edges() != "":
+		print("Completed paragraph in think block: ", current_paragraph)
+		if embedding_queue.is_empty():
+			print("Sending embedding to the model")
+			LlmBackend.embed(current_paragraph, false)
+		embedding_queue.append(current_paragraph)
+
+
+func get_formatted_datetime():
+	var dt = Time.get_datetime_dict_from_system()
+
+	# Convert 24-hour to 12-hour format with AM/PM
+	var hour = dt.hour
+	var period = "AM"
+	if hour >= 12:
+		period = "PM"
+		if hour > 12:
+			hour -= 12
+	elif hour == 0:
+		hour = 12
+
+	# Format with leading zeros where needed
+	var formatted = (
+		"%02d/%02d/%04d %02d:%02d %s" % [dt.day, dt.month, dt.year, hour, dt.minute, period]
+	)
+
+	return formatted

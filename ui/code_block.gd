@@ -31,4 +31,4 @@ func _on_copy_button_pressed() -> void:
 
 
 func _on_embed_button_pressed() -> void:
-	LlmBackend.embed(code_area.get_parsed_text())
+	LlmBackend.embed(code_area.get_parsed_text(), true)
