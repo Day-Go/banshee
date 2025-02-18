@@ -3,12 +3,15 @@ extends Node
 @onready var message_scene = preload("res://ui/message.tscn")
 @onready var code_block_scene = preload("res://ui/code_block.tscn")
 @onready var think_block_scene = preload("res://ui/think_block.tscn")
+@onready var think_space_scene = preload("res://ui/think_space.tscn")
+#@onready var think_space: SubViewportContainer = %ThinkSpace
 @onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var model_dropdown: OptionButton = %ModelDropdown
 @onready var button: Button = %SendButton
 @onready var input: TextEdit = %InputTextArea
 @onready var output_container: VBoxContainer = %OutputContainer
 
+var think_space
 enum Sender { USER, ASSISTANT }
 
 var models := ["deepseek-r1:32b", "qwen2.5-coder:32b", "openthinker:32b", "olmo2:latest"]
@@ -112,6 +115,8 @@ func _on_embedding_ready(embedding: Array) -> void:
 	embedding_queue.pop_front()
 	if !embedding_queue.is_empty():
 		LlmBackend.embed(embedding_queue[0], false)
+
+	think_space.add_embedding(embedding)
 
 
 func _on_button_pressed() -> void:
@@ -264,9 +269,19 @@ func create_code_block(language: String) -> void:
 
 
 func create_think_block() -> void:
+	var hbox_container = HBoxContainer.new()
+	hbox_container.size_flags_horizontal = Control.SIZE_FILL
+	message_container.add_child(hbox_container)
+
 	var think_block = think_block_scene.instantiate()
-	message_container.add_child(think_block)
+	think_block.size_flags_horizontal = Control.SIZE_FILL | Control.SIZE_EXPAND
+	hbox_container.add_child(think_block)
 	write_target = think_block.get_node("%TextArea") as RichTextLabel
+
+	think_space = think_space_scene.instantiate()
+	think_space.size_flags_horizontal = Control.SIZE_FILL | Control.SIZE_EXPAND
+	hbox_container.add_child(think_space)
+
 	# Ensure the write target is valid
 	if write_target == null:
 		push_error("Failed to get %TextArea in think block")
