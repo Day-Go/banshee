@@ -6,7 +6,20 @@ extends SubViewportContainer
 @export var point_color: Color = Color.AZURE
 @export var line_color: Color = Color.BLACK
 @export var scale_padding: float = 20.0  # Padding around the visualization
-@export var use_umap: bool = true  # Set to true to use UMAP, false for PCA
+@export_enum("t-SNE", "UMAP", "PCA") var reduction_method: int = 0  # t-SNE as default (0)
+
+@export var show_point_numbers: bool = true  # Toggle for showing point numbers
+@export var number_font_size: int = 12  # Font size for point numbers
+@export var number_offset: Vector2 = Vector2(10, -5)  # Offset position for numbers
+
+# t-SNE parameters
+@export var tsne_perplexity: float = 30.0
+@export var tsne_learning_rate: float = 200.0
+@export var tsne_max_iterations: int = 10000
+@export var tsne_initial_momentum: float = 0.5
+@export var tsne_final_momentum: float = 0.8
+@export var tsne_momentum_switch_iter: int = 250
+@export var tsne_min_gain: float = 0.01
 
 # Canvas properties
 var canvas_center: Vector2
@@ -22,6 +35,13 @@ var all_embeddings: Array = []
 # PCA variables
 var mean_vector: Array = []
 var eigenvectors: Array = []
+
+# t-SNE variables
+var tsne_pij: Array = []  # Pairwise affinities
+var tsne_y: Array = []  # Low-dimensional representation
+var tsne_gains: Array = []  # Adaptive learning rates
+var tsne_iy: Array = []  # Momentum
+var tsne_iteration: int = 0
 
 # Node references
 @onready var sub_viewport: SubViewport = %SubViewport
@@ -53,7 +73,6 @@ func add_embedding(embedding: Array) -> void:
 	# If we have only one embedding, create an initial point
 	if all_embeddings.size() == 1:
 		points_2d.append(Vector2(0, 0))
-		_normalize_points()
 		canvas.queue_redraw()
 		return
 
@@ -64,10 +83,250 @@ func add_embedding(embedding: Array) -> void:
 
 # Perform dimensional reduction on all embeddings
 func _reduce_dimensions() -> Array[Vector2]:
-	if use_umap:
-		return _reduce_with_umap()
-	else:
-		return _reduce_with_pca()
+	match reduction_method:
+		0:  # t-SNE
+			return _reduce_with_tsne()
+		1:  # UMAP
+			return _reduce_with_umap()
+		2:  # PCA
+			return _reduce_with_pca()
+
+	# Default to t-SNE if invalid option
+	return _reduce_with_tsne()
+
+
+# t-SNE implementation
+func _reduce_with_tsne() -> Array[Vector2]:
+	var data_matrix: Array = all_embeddings.duplicate()
+	var num_samples: int = data_matrix.size()
+	var dimension: int = data_matrix[0].size()
+
+	# Initialize or reset t-SNE variables if this is the first call
+	if tsne_iteration == 0 or tsne_y.size() != num_samples:
+		# Initialize low-dimensional points with small random values
+		tsne_y = []
+		for i in range(num_samples):
+			tsne_y.append([randf_range(-0.0001, 0.0001), randf_range(-0.0001, 0.0001)])
+
+		# Initialize momentum and gains
+		tsne_iy = []
+		tsne_gains = []
+		for i in range(num_samples):
+			tsne_iy.append([0.0, 0.0])
+			tsne_gains.append([1.0, 1.0])
+
+		# Compute pairwise affinities (P_ij)
+		tsne_pij = _compute_pairwise_affinities(data_matrix)
+		tsne_iteration = 0
+
+	# Perform a set number of iterations per call (to avoid freezing the UI)
+	var iterations_per_call = 20
+	for iter in range(iterations_per_call):
+		if tsne_iteration >= tsne_max_iterations:
+			break
+
+		# Update momentum based on iteration
+		var momentum = tsne_final_momentum
+		if tsne_iteration < tsne_momentum_switch_iter:
+			momentum = tsne_initial_momentum
+
+		# Compute gradient
+		var grad = _compute_tsne_gradient(tsne_y, tsne_pij)
+
+		# Update points with gradient and momentum
+		for i in range(num_samples):
+			for d in range(2):  # 2D output
+				# Update gains with adaptive learning rate
+				if sign(grad[i][d]) != sign(tsne_iy[i][d]):
+					tsne_gains[i][d] += 0.2
+				else:
+					tsne_gains[i][d] *= 0.8
+
+				tsne_gains[i][d] = max(tsne_min_gain, tsne_gains[i][d])
+
+				# Update position with momentum and gradient
+				tsne_iy[i][d] = (
+					momentum * tsne_iy[i][d] - tsne_learning_rate * tsne_gains[i][d] * grad[i][d]
+				)
+				tsne_y[i][d] += tsne_iy[i][d]
+
+		# Center the solution (optional but helps with visualization)
+		_center_tsne_solution(tsne_y)
+		tsne_iteration += 1
+
+	# Convert to Vector2 array
+	var result: Array[Vector2] = []
+	for point in tsne_y:
+		result.append(Vector2(point[0], point[1]))
+
+	return result
+
+
+# Compute pairwise affinities for t-SNE
+func _compute_pairwise_affinities(data: Array) -> Array:
+	var num_samples = data.size()
+	var pij = []
+
+	# Initialize Pij matrix
+	for i in range(num_samples):
+		pij.append([])
+		for j in range(num_samples):
+			pij[i].append(0.0)
+
+	# Compute pairwise squared Euclidean distances
+	var squared_distances = []
+	for i in range(num_samples):
+		squared_distances.append([])
+		for j in range(num_samples):
+			var dist_sq = 0.0
+			for k in range(data[i].size()):
+				dist_sq += pow(data[i][k] - data[j][k], 2)
+			squared_distances[i].append(dist_sq)
+
+	# Find conditional probabilities with binary search for sigma
+	for i in range(num_samples):
+		# Set diagonal to zero
+		squared_distances[i][i] = 0.0
+
+		# Binary search for sigma (variance of Gaussian)
+		var beta = 1.0  # precision (1/sigma^2)
+		var beta_min = -INF
+		var beta_max = INF
+		var H_target = log(tsne_perplexity)
+		var tries = 0
+		var found = false
+
+		var p_row = []
+		for j in range(num_samples):
+			p_row.append(0.0)
+
+		# Binary search for suitable sigma
+		while tries < 50 and not found:
+			# Compute conditional probabilities with current beta
+			var sum_p = 0.0
+			for j in range(num_samples):
+				if i != j:
+					p_row[j] = exp(-squared_distances[i][j] * beta)
+					sum_p += p_row[j]
+				else:
+					p_row[j] = 0.0
+
+			# Normalize and compute entropy
+			var H = 0.0
+			for j in range(num_samples):
+				if sum_p > 0.0 and p_row[j] > 0.0:
+					p_row[j] /= sum_p
+					H -= p_row[j] * log(p_row[j])
+				else:
+					p_row[j] = 0.0
+
+			# Check if we found good sigma
+			if abs(H - H_target) < 0.01:
+				found = true
+			else:
+				# Binary search update
+				if H > H_target:
+					beta_min = beta
+					if beta_max == INF:
+						beta *= 2.0
+					else:
+						beta = (beta + beta_max) / 2.0
+				else:
+					beta_max = beta
+					if beta_min == -INF:
+						beta /= 2.0
+					else:
+						beta = (beta + beta_min) / 2.0
+
+			tries += 1
+
+		# Store the normalized conditional probabilities
+		for j in range(num_samples):
+			pij[i][j] = p_row[j]
+
+	# Symmetrize and normalize the joint probability distribution
+	var sum_pij = 0.0
+	for i in range(num_samples):
+		for j in range(num_samples):
+			pij[i][j] = (pij[i][j] + pij[j][i]) / (2.0 * num_samples)
+			sum_pij += pij[i][j]
+
+	# Ensure P is normalized
+	if sum_pij > 0.0:
+		for i in range(num_samples):
+			for j in range(num_samples):
+				pij[i][j] /= sum_pij
+
+	return pij
+
+
+# Compute gradient for t-SNE
+func _compute_tsne_gradient(y: Array, pij: Array) -> Array:
+	var num_samples = y.size()
+	var grad = []
+
+	# Initialize gradient
+	for i in range(num_samples):
+		grad.append([0.0, 0.0])
+
+	# Compute Q_ij (low-dimensional affinities)
+	var qij = []
+	var sum_q = 0.0
+
+	for i in range(num_samples):
+		qij.append([])
+		for j in range(num_samples):
+			qij[i].append(0.0)
+
+	# Compute unnormalized Q
+	for i in range(num_samples):
+		for j in range(i + 1, num_samples):
+			var dist_sq = pow(y[i][0] - y[j][0], 2) + pow(y[i][1] - y[j][1], 2)
+			var q = 1.0 / (1.0 + dist_sq)  # Student t-distribution
+			qij[i][j] = q
+			qij[j][i] = q
+			sum_q += 2.0 * q
+
+	# Normalize Q
+	for i in range(num_samples):
+		for j in range(num_samples):
+			if i != j:
+				qij[i][j] /= sum_q
+
+	# Compute gradient: 4 * (p_ij - q_ij) * q_ij * inv_dist * (y_i - y_j)
+	for i in range(num_samples):
+		for j in range(num_samples):
+			if i != j:
+				var q = qij[i][j]
+				var p = pij[i][j]
+				var factor = 4.0 * (p - q) * q
+
+				# Gradient for y_i
+				grad[i][0] += factor * (y[i][0] - y[j][0])
+				grad[i][1] += factor * (y[i][1] - y[j][1])
+
+	return grad
+
+
+# Center the t-SNE solution to avoid drift
+func _center_tsne_solution(y: Array) -> void:
+	var num_samples = y.size()
+	if num_samples == 0:
+		return
+
+	# Compute mean
+	var mean_y = [0.0, 0.0]
+	for i in range(num_samples):
+		mean_y[0] += y[i][0]
+		mean_y[1] += y[i][1]
+
+	mean_y[0] /= num_samples
+	mean_y[1] /= num_samples
+
+	# Center
+	for i in range(num_samples):
+		y[i][0] -= mean_y[0]
+		y[i][1] -= mean_y[1]
 
 
 # Basic PCA implementation
@@ -302,18 +561,23 @@ func _draw_visualization() -> void:
 			var end_pos = _transform_point(points_2d[i])
 			canvas.draw_line(start_pos, end_pos, line_color, line_width)
 
-	# Draw points
-	for point in points_2d:
-		var pos = _transform_point(point)
+	# Draw points and their numbers
+	for i in range(points_2d.size()):
+		var pos = _transform_point(points_2d[i])
 		canvas.draw_circle(pos, point_radius, point_color)
 
-	# Debug: Print transformation info
-	print("Canvas center: ", canvas_center)
-	print("Data center: ", data_center)
-	print("Scale factor: ", scale_factor)
-	if points_2d.size() > 0:
-		print("First point raw: ", points_2d[0])
-		print("First point transformed: ", _transform_point(points_2d[0]))
+		# Draw the point number if enabled
+		if show_point_numbers:
+			var number_text = str(i + 1)  # 1-based indexing
+			canvas.draw_string(
+				Control.new().get_theme_default_font(),
+				pos + number_offset,
+				number_text,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				number_font_size,
+				Color.WHITE
+			)
 
 
 # Transform a point from normalized space to canvas space

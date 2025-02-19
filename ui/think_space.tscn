@@ -11,7 +11,17 @@ line_width = null
 point_color = null
 line_color = null
 scale_padding = null
-use_umap = null
+reduction_method = null
+show_point_numbers = null
+number_font_size = null
+number_offset = null
+tsne_perplexity = null
+tsne_learning_rate = null
+tsne_max_iterations = null
+tsne_initial_momentum = null
+tsne_final_momentum = null
+tsne_momentum_switch_iter = null
+tsne_min_gain = null
 
 [node name="SubViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
